@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-forest: #22543d;
+    --color-forest-bright: #54a967;
+  }
+
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom styles for Freebuff Landing Page */
+.text-forest-bright {
+  color: #54a967;
+}
+
+.bg-forest-bright {
+  background-color: #54a967;
+}
+
+.bg-forest\/15 {
+  background-color: rgba(34, 84, 61, 0.15);
+}
+
+.border-forest\/40 {
+  border-color: rgba(34, 84, 61, 0.4);
+}
+
+/* Star animations */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: var(--min, 0.3);
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: var(--max, 1);
+    transform: scale(1.2);
+    box-shadow: 0 0 var(--glow, 4px) rgba(255, 255, 255, 0.8);
+  }
+}
+
+.lp-star {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  animation: twinkle var(--dur, 4s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Shooting star animation */
+@keyframes shootingStar {
+  0% {
+    transform: translate(0, 0) opacity(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx, 350px), var(--dy, 200px));
+    opacity: 0;
+  }
+}
+
+.lp-shooting-star {
+  position: absolute;
+  pointer-events: none;
+  animation: shootingStar var(--dur, 6s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Font styles */
+.lp-hero-heading {
+  letter-spacing: -0.03em;
+  font-weight: 500;
+}
+
+.lp-serif {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
