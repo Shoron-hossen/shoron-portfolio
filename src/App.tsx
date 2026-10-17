@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import {
@@ -41,14 +41,14 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Initialize Lenis smooth scroll — Desktop Only (Disabled on mobile for native smooth touch performance)
+  // Initialize Lenis smooth scroll — Desktop Only, snappy & responsive (No floaty inertia)
   useEffect(() => {
     const isMobile = window.innerWidth < 1024 || 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
     if (isMobile) return;
 
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      duration: 0.65,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
@@ -269,7 +269,7 @@ export default function App() {
           ? 'py-3 bg-black/15 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.25)]'
           : 'py-5 bg-transparent border-b border-transparent'
       }`}>
-        <div className="relative flex min-w-0 items-center justify-between gap-3 mx-auto max-w-6xl px-6">
+        <div className="relative flex min-w-0 items-center justify-between gap-3 mx-auto max-w-6xl px-3.5 sm:px-6">
           
           {/* Brand Logo — Perfectly aligns with left page content */}
           <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -334,71 +334,79 @@ export default function App() {
 
         </div>
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden mx-4 mt-2 rounded-2xl border border-[#383838] bg-[#1e1e1f]/95 p-4 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
-            <div className="flex flex-col space-y-1">
-              <a
-                href="#about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-              >
-                About
-              </a>
-              <a
-                href="#resume"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-              >
-                Resume
-              </a>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate('/projects');
-                }}
-                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
-              >
-                <span>Portfolio</span>
-                <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
-              </button>
-              <a
-                href="#ventures"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-              >
-                Ventures & Entrepreneurship
-              </a>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate('/modeling');
-                }}
-                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
-              >
-                <span>Modeling & Campaigns</span>
-                <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
-              </button>
-              <a
-                href="#contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-              >
-                Contact
-              </a>
-              <div className="pt-2 border-t border-[#383838]">
+        {/* Mobile Navigation Drawer with Smooth Fluid Animation */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden mx-2.5 sm:mx-4 mt-2 rounded-2xl border border-[#383838]/80 bg-[#1e1e1f]/98 p-3 sm:p-4 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+            >
+              <div className="flex flex-col space-y-1">
+                <a
+                  href="#about"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+                >
+                  <span>About</span>
+                </a>
+                <a
+                  href="#resume"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+                >
+                  <span>Resume</span>
+                </a>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate('/projects');
+                  }}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
+                >
+                  <span>Portfolio</span>
+                  <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
+                </button>
+                <a
+                  href="#ventures"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+                >
+                  <span>Ventures & Entrepreneurship</span>
+                </a>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate('/modeling');
+                  }}
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
+                >
+                  <span>Modeling & Campaigns</span>
+                  <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
+                </button>
                 <a
                   href="#contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] shadow-sm"
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
                 >
-                  <span>Get in Touch</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <span>Contact</span>
                 </a>
+                <div className="pt-2 border-t border-[#383838]">
+                  <a
+                    href="#contact"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] shadow-sm hover:brightness-105 transition-all"
+                  >
+                    <span>Get in Touch</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -437,7 +445,7 @@ export default function App() {
         </div>
 
         {/* Hero Layout: Left Side Profile, Right Side Photo — Raised slightly for balanced spacing */}
-        <div id="about" className="relative z-30 mx-auto flex max-w-6xl flex-col items-center px-6 pt-32 pb-8 text-left sm:pt-36 md:pt-38">
+        <div id="about" className="relative z-30 mx-auto flex max-w-6xl flex-col items-center px-3.5 sm:px-6 pt-28 sm:pt-36 pb-3 sm:pb-8 text-left md:pt-38">
           <motion.div
             style={{ y: heroY }}
             initial={{ opacity: 0, y: 16 }}
@@ -598,9 +606,9 @@ export default function App() {
             </div>
 
             {/* Right Side: Developer Photo Card — Smooth, seamless frosted glass styling without muddy halos */}
-            <div className="flex justify-center md:col-span-5 md:justify-end">
-              <div className="relative group w-full max-w-[305px]">
-                <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#121212]/50 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] p-2 transition-all duration-300 hover:border-white/20">
+            <div className="w-full flex justify-center md:col-span-5 md:justify-end">
+              <div className="relative group w-full sm:max-w-[340px] md:max-w-[305px]">
+                <div className="relative overflow-hidden rounded-[20px] sm:rounded-[22px] border border-white/10 bg-[#121212]/50 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] p-2 transition-all duration-300 hover:border-white/20">
                   <div className="overflow-hidden rounded-[16px] aspect-[4/5] bg-black/20">
                     {data.avatarUrl ? (
                       <img
@@ -628,7 +636,7 @@ export default function App() {
         </div>
 
         {/* Multi-Layer Landscape Parallax — Expanded height on mobile so all 3 cards stack without cut-off */}
-        <div className="relative mt-8 min-h-[148vh] sm:min-h-0 sm:h-[108vh] w-full md:mt-12 md:h-[118vh]">
+        <div className="relative mt-2 sm:mt-8 min-h-[136vh] sm:min-h-0 sm:h-[108vh] w-full md:mt-12 md:h-[118vh]">
           
           {/* Layer 0: Sky Background */}
           <motion.img
@@ -649,8 +657,8 @@ export default function App() {
           />
 
           {/* Layer 2: Main Featured Profile Card */}
-          <div className="lp-gpu absolute inset-x-0 top-[8%] sm:top-[11%] z-10 mx-auto w-full max-w-4xl px-3 sm:px-6">
-            <div className="relative w-full overflow-hidden rounded-t-[20px] border border-b-0 border-[#383838] bg-[#1e1e1f] text-[#fafafa] shadow-[0_16px_30px_rgba(0,0,0,0.25)] px-4 pt-7 pb-36 sm:px-9 sm:pt-9 sm:pb-[42vh] md:pb-[46vh]">
+          <div className="lp-gpu absolute inset-x-0 top-2 sm:top-[11%] z-10 mx-auto w-full max-w-4xl px-3.5 sm:px-6">
+            <div className="relative w-full overflow-hidden rounded-t-[20px] border border-b-0 border-[#383838] bg-[#1e1e1f] text-[#fafafa] shadow-[0_16px_30px_rgba(0,0,0,0.25)] px-4 pt-6 sm:pt-9 pb-36 sm:px-9 sm:pb-[42vh] md:pb-[46vh]">
               
               {/* Badge & Quick Stats — DYNAMIC */}
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#383838] pb-5">
@@ -707,12 +715,12 @@ export default function App() {
           MAIN CONTENT — SEAMLESS OBSIDIAN BACKGROUND MATCHING HERO AREA (CARDS UNTOUCHED)
          ═══════════════════════════════════════════════════════════════ */}
       <div className="relative z-10 bg-transparent pt-4">
-        <section className="relative px-6 py-8">
+        <section className="relative px-3.5 sm:px-6 py-6 sm:py-8">
           <div className="mx-auto max-w-6xl">
 
             {/* ── Terminal Showcase ── */}
-            <section className="py-10">
-              <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+            <section className="py-6 sm:py-10">
+              <div className="grid items-center gap-8 md:grid-cols-2 md:gap-16">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -724,10 +732,10 @@ export default function App() {
                       ENGINEERING WORKFLOW
                     </span>
                   </div>
-                  <h2 className="lp-hero-heading text-[32px] leading-[1.15] text-[#fafafa] md:text-[42px] lg:text-[48px]">
+                  <h2 className="lp-hero-heading text-[28px] sm:text-[32px] leading-[1.15] text-[#fafafa] md:text-[42px] lg:text-[48px]">
                     Clean Architecture. <span className="text-[#ffdb70]">Reliable Delivery.</span>
                   </h2>
-                  <p className="mt-4 max-w-md text-base leading-relaxed text-[#d6d6d6]/70">
+                  <p className="mt-3 sm:mt-4 max-w-md text-sm sm:text-base leading-relaxed text-[#d6d6d6]/70">
                     Building scalable mobile and web applications, robust backend architectures, and AI-driven solutions designed for performance and reliability.
                   </p>
                 </motion.div>
@@ -740,16 +748,16 @@ export default function App() {
                   transition={{ duration: 0.6 }}
                   className="lp-gpu"
                 >
-                  <div className="flex h-[360px] flex-col overflow-hidden rounded-[20px] border border-[#383838] bg-[#1e1e1f] shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
-                    <div className="flex items-center gap-2 border-b border-[#383838] bg-[#212123] px-4 py-3">
+                  <div className="flex h-[340px] sm:h-[360px] flex-col overflow-hidden rounded-[20px] border border-[#383838] bg-[#1e1e1f] shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+                    <div className="flex items-center gap-2 border-b border-[#383838] bg-[#212123] px-3.5 sm:px-4 py-2.5 sm:py-3">
                       <span className="flex items-center gap-1.5">
                         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]/80" />
                         <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]/80" />
                         <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]/80" />
                       </span>
-                      <span className="ml-2 text-[12px] text-[#d6d6d6]/60 font-mono">{firstName}@workspace — zsh</span>
+                      <span className="ml-2 text-[11px] sm:text-[12px] text-[#d6d6d6]/60 font-mono">{firstName}@workspace — zsh</span>
                     </div>
-                    <div className="min-h-0 flex-1 p-5 font-mono text-[13px] leading-relaxed">
+                    <div className="min-h-0 flex-1 p-4 sm:p-5 font-mono text-[12px] sm:text-[13px] leading-relaxed">
                       <div className="mb-3 flex items-center justify-between text-[11px] text-[#d6d6d6]/50">
                         <span className="text-[#ffdb70]">● connected</span>
                         <span>{data.name} · main branch</span>
@@ -770,39 +778,39 @@ export default function App() {
                 2. Experience (BookOpen icon in square icon-box)
                 3. My skills (Code2 icon in square icon-box with progress bars + category badges)
                ═══════════════════════════════════════════════════════════ */}
-            <section id="resume" className="scroll-mt-24 py-10">
-              <div id="experience" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-6 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+            <section id="resume" className="scroll-mt-24 py-8 sm:py-10">
+              <div id="experience" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
                 {/* Article Title with vCard signature golden accent bar */}
-                <header className="mb-8">
-                  <h2 className="relative pb-3 text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
+                <header className="mb-6 sm:mb-8">
+                  <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
                     Resume
                   </h2>
                 </header>
 
                 {/* 1. EDUCATION SECTION */}
-                <div className="mb-12">
-                  <div className="flex items-center gap-3.5 mb-7">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#383838] to-[#202022] border border-[#383838] shadow-[-4px_8px_24px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#ffdb70]">
+                <div className="mb-10 sm:mb-12">
+                  <div className="flex items-center gap-3 sm:gap-3.5 mb-5 sm:mb-7">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-[#383838] to-[#202022] border border-[#383838] shadow-[-4px_8px_24px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#ffdb70] shrink-0">
                       <BookOpen className="h-5 w-5" />
                     </div>
-                    <h3 className="text-2xl font-bold text-[#fafafa]">Education</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#fafafa]">Education</h3>
                   </div>
 
-                  <ol className="timeline-list border-l border-[#383838] ml-5 sm:ml-7 pl-6 sm:pl-8 space-y-7 relative">
+                  <ol className="timeline-list border-l border-[#383838] ml-3 sm:ml-7 pl-4 sm:pl-8 space-y-6 sm:space-y-7 relative">
                     {(data.educations && data.educations.length > 0 ? data.educations : DEFAULT_PORTFOLIO_DATA.educations || []).map((edu, idx) => (
                       <li key={idx} className="relative">
-                        <span className="absolute -left-[30px] sm:-left-[38px] top-1.5 w-2.5 h-2.5 rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] shadow-[0_0_0_4px_#383838]" />
+                        <span className="absolute -left-[22px] sm:-left-[38px] top-1.5 w-2.5 h-2.5 rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] shadow-[0_0_0_4px_#383838]" />
                         <h4 className="text-base sm:text-lg font-semibold text-[#fafafa] mb-0.5">
                           {edu.title}
                         </h4>
                         <p className="text-xs sm:text-sm font-mono text-[#ffdb70]/90 mb-1">
                           {edu.institution}
                         </p>
-                        <span className="text-sm font-medium text-[#ceb15a] mb-2.5 block">
+                        <span className="text-xs sm:text-sm font-medium text-[#ceb15a] mb-2 block">
                           {edu.period}
                         </span>
-                        <p className="text-sm leading-relaxed text-[#d6d6d6] font-light max-w-3xl">
+                        <p className="text-xs sm:text-sm leading-relaxed text-[#d6d6d6] font-light max-w-3xl">
                           {edu.description}
                         </p>
                       </li>
@@ -811,28 +819,28 @@ export default function App() {
                 </div>
 
                 {/* 2. EXPERIENCE SECTION */}
-                <div className="mb-12">
-                  <div className="flex items-center gap-3.5 mb-7">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#383838] to-[#202022] border border-[#383838] shadow-[-4px_8px_24px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#ffdb70]">
+                <div className="mb-10 sm:mb-12">
+                  <div className="flex items-center gap-3 sm:gap-3.5 mb-5 sm:mb-7">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-[#383838] to-[#202022] border border-[#383838] shadow-[-4px_8px_24px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#ffdb70] shrink-0">
                       <BookOpen className="h-5 w-5" />
                     </div>
-                    <h3 className="text-2xl font-bold text-[#fafafa]">Experience</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#fafafa]">Experience</h3>
                   </div>
 
-                  <ol className="timeline-list border-l border-[#383838] ml-5 sm:ml-7 pl-6 sm:pl-8 space-y-7 relative">
+                  <ol className="timeline-list border-l border-[#383838] ml-3 sm:ml-7 pl-4 sm:pl-8 space-y-6 sm:space-y-7 relative">
                     {data.experiences.map((exp, idx) => (
                       <li key={idx} className="relative">
-                        <span className="absolute -left-[30px] sm:-left-[38px] top-1.5 w-2.5 h-2.5 rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] shadow-[0_0_0_4px_#383838]" />
+                        <span className="absolute -left-[22px] sm:-left-[38px] top-1.5 w-2.5 h-2.5 rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] shadow-[0_0_0_4px_#383838]" />
                         <h4 className="text-base sm:text-lg font-semibold text-[#fafafa] mb-0.5">
                           {exp.title}
                         </h4>
                         <p className="text-xs sm:text-sm font-mono text-[#ffdb70]/90 mb-1">
                           {exp.company}
                         </p>
-                        <span className="text-sm font-medium text-[#ceb15a] mb-2.5 block">
+                        <span className="text-xs sm:text-sm font-medium text-[#ceb15a] mb-2 block">
                           {exp.period}
                         </span>
-                        <p className="text-sm leading-relaxed text-[#d6d6d6] font-light max-w-3xl">
+                        <p className="text-xs sm:text-sm leading-relaxed text-[#d6d6d6] font-light max-w-3xl">
                           {exp.description}
                         </p>
                       </li>
@@ -842,15 +850,15 @@ export default function App() {
 
                 {/* 3. MY SKILLS SECTION */}
                 <div id="skills" className="scroll-mt-28">
-                  <div className="flex items-center gap-3.5 mb-6">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#383838] to-[#202022] border border-[#383838] shadow-[-4px_8px_24px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#ffdb70]">
+                  <div className="flex items-center gap-3 sm:gap-3.5 mb-6">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-[#383838] to-[#202022] border border-[#383838] shadow-[-4px_8px_24px_rgba(0,0,0,0.25)] flex items-center justify-center text-[#ffdb70] shrink-0">
                       <Code2 className="h-5 w-5" />
                     </div>
-                    <h3 className="text-2xl font-bold text-[#fafafa]">My skills</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#fafafa]">My skills</h3>
                   </div>
 
                   {/* Skills Progress Card (Exact vCard Style) */}
-                  <div className="rounded-[20px] bg-[#212123] border border-[#383838] p-6 sm:p-8 shadow-[0_16px_30px_rgba(0,0,0,0.25)] mb-8">
+                  <div className="rounded-[20px] bg-[#212123] border border-[#383838] p-4 sm:p-8 shadow-[0_16px_30px_rgba(0,0,0,0.25)] mb-8">
                     <div className="space-y-5">
                       {(data.skillPercentages && data.skillPercentages.length > 0 ? data.skillPercentages : DEFAULT_PORTFOLIO_DATA.skillPercentages || []).map((skill, sIdx) => (
                         <div key={sIdx} className="space-y-2">
@@ -912,23 +920,23 @@ export default function App() {
                    - Project category (.project-category)
                    - Live Preview & GitHub links
                ═══════════════════════════════════════════════════════════ */}
-            <section id="portfolio" className="scroll-mt-24 py-10">
-              <div id="projects" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-6 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+            <section id="portfolio" className="scroll-mt-24 py-8 sm:py-10">
+              <div id="projects" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
                 {/* Article Title with vCard signature golden accent bar */}
-                <header className="mb-8">
-                  <h2 className="relative pb-3 text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
+                <header className="mb-6 sm:mb-8">
+                  <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
                     Portfolio
                   </h2>
                 </header>
 
                 {/* Filter List Tabs */}
-                <ul className="flex flex-wrap items-center gap-4 sm:gap-6 mb-8 text-sm border-b border-[#383838]/60 pb-4">
+                <ul className="flex flex-wrap items-center gap-3 sm:gap-6 mb-6 sm:mb-8 text-xs sm:text-sm border-b border-[#383838]/60 pb-3 sm:pb-4">
                   {['All', 'Full Stack', 'Frontend', 'Backend', 'DevOps', 'Mobile'].map((cat) => (
                     <li key={cat}>
                       <button
                         onClick={() => setSelectedCategory(cat)}
-                        className={`transition-colors cursor-pointer text-sm font-medium pb-2 ${
+                        className={`transition-colors cursor-pointer text-xs sm:text-sm font-medium pb-2 ${
                           selectedCategory === cat
                             ? 'text-[#ffdb70] font-semibold border-b-2 border-[#ffdb70] -mb-[18px]'
                             : 'text-[#d6d6d6]/70 hover:text-[#fafafa]'
@@ -941,7 +949,7 @@ export default function App() {
                 </ul>
 
                 {/* Project List Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7">
                   {data.projects
                     .filter(p => selectedCategory === 'All' || p.category.toLowerCase() === selectedCategory.toLowerCase())
                     .map((project) => (
@@ -950,7 +958,7 @@ export default function App() {
                         className="project-item group block"
                       >
                         {/* Figure container with image and hover eye icon-box */}
-                        <div className="relative overflow-hidden rounded-[16px] h-52 w-full bg-[#121212] mb-3.5 border border-[#383838]/60">
+                        <div className="relative overflow-hidden rounded-[16px] h-48 sm:h-52 w-full bg-[#121212] mb-3 border border-[#383838]/60">
                           {/* Hover dark overlay */}
                           <div className="absolute inset-0 z-10 bg-transparent group-hover:bg-black/55 transition-colors duration-300 pointer-events-none" />
                           
@@ -1012,10 +1020,10 @@ export default function App() {
                 </div>
 
                 {/* View All Projects Button */}
-                <div className="text-center mt-10 pt-6 border-t border-[#383838]/60">
+                <div className="text-center mt-8 sm:mt-10 pt-5 sm:pt-6 border-t border-[#383838]/60">
                   <button
                     onClick={() => navigate('/projects')}
-                    className="inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold transition-all shadow-md cursor-pointer bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_20px_rgba(255,219,112,0.35)]"
+                    className="inline-flex items-center gap-2 rounded-full px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_20px_rgba(255,219,112,0.35)]"
                   >
                     <span>View All Projects in Archive</span>
                     <ArrowRight className="h-4 w-4" />
@@ -1027,43 +1035,43 @@ export default function App() {
 
             {/* ── Ventures & Entrepreneurship Section (Directly under Projects) ── */}
             {data.ventures && data.ventures.length > 0 && (
-            <section id="ventures" className="scroll-mt-24 py-10">
-              <div className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-6 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+            <section id="ventures" className="scroll-mt-24 py-8 sm:py-10">
+              <div className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
                 {/* Article Title with signature golden accent bar */}
-                <header className="mb-8">
-                  <h2 className="relative pb-3 text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
+                <header className="mb-6 sm:mb-8">
+                  <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
                     Ventures & Entrepreneurship
                   </h2>
-                  <p className="mt-3 text-sm text-[#d6d6d6]/70 max-w-2xl leading-relaxed">
+                  <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-[#d6d6d6]/70 max-w-2xl leading-relaxed">
                     Organizations founded, co-built, or steered. Driving product innovation, engineering leadership, and strategic business growth.
                   </p>
                 </header>
 
                 {/* Ventures Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {(data.ventures || []).map((venture) => (
                     <div
                       key={venture.id}
-                      className="group relative rounded-[18px] bg-[#212123] border border-[#383838] p-6 transition-all duration-300 hover:border-[#ffdb70]/50 hover:shadow-[0_12px_30px_rgba(0,0,0,0.35)] flex flex-col justify-between"
+                      className="group relative rounded-[18px] bg-[#212123] border border-[#383838] p-4 sm:p-6 transition-all duration-300 hover:border-[#ffdb70]/50 hover:shadow-[0_12px_30px_rgba(0,0,0,0.35)] flex flex-col justify-between"
                     >
                       <div>
                         {/* Top: Logo/Photo & Category & Period */}
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                          <div className="flex items-center gap-3.5">
+                        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+                          <div className="flex items-center gap-3 sm:gap-3.5">
                             {venture.imageUrl ? (
                               <img
                                 src={venture.imageUrl}
                                 alt={venture.name}
-                                className="h-14 w-14 rounded-xl object-cover border border-[#383838] bg-black/40 shadow-inner group-hover:border-[#ffdb70]/40 transition-colors shrink-0"
+                                className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl object-cover border border-[#383838] bg-black/40 shadow-inner group-hover:border-[#ffdb70]/40 transition-colors shrink-0"
                               />
                             ) : (
-                              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#2a2a2b] to-[#1a1a1b] border border-[#383838] flex items-center justify-center text-[#ffdb70] shrink-0">
-                                <Building2 className="h-6 w-6" />
+                              <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-to-br from-[#2a2a2b] to-[#1a1a1b] border border-[#383838] flex items-center justify-center text-[#ffdb70] shrink-0">
+                                <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
                               </div>
                             )}
                             <div>
-                              <h3 className="text-lg font-bold text-[#fafafa] group-hover:text-[#ffdb70] transition-colors leading-snug">
+                              <h3 className="text-base sm:text-lg font-bold text-[#fafafa] group-hover:text-[#ffdb70] transition-colors leading-snug">
                                 {venture.name}
                               </h3>
                               <p className="text-xs font-semibold text-[#ffdb70]/90 mt-0.5">
@@ -1073,20 +1081,20 @@ export default function App() {
                           </div>
 
                           {venture.category && (
-                            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#2a2a2b] border border-[#383838] text-[#d6d6d6]/80">
+                            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-[#2a2a2b] border border-[#383838] text-[#d6d6d6]/80">
                               {venture.category}
                             </span>
                           )}
                         </div>
 
                         {/* Description */}
-                        <p className="text-sm text-[#d6d6d6]/80 leading-relaxed mb-4">
+                        <p className="text-xs sm:text-sm text-[#d6d6d6]/80 leading-relaxed mb-4">
                           {venture.description}
                         </p>
                       </div>
 
                       {/* Footer: Period + Website Link */}
-                      <div className="pt-4 border-t border-[#383838]/60 flex items-center justify-between text-xs text-[#d6d6d6]/60">
+                      <div className="pt-3.5 sm:pt-4 border-t border-[#383838]/60 flex items-center justify-between text-xs text-[#d6d6d6]/60">
                         <span>{venture.period || 'Active'}</span>
                         {venture.websiteUrl && (
                           <a
@@ -1108,20 +1116,20 @@ export default function App() {
             )}
 
             {/* ── FAQ Section — Exact Same Alignment & Architecture as Resume and Portfolio ── */}
-            <section id="contact" className="scroll-mt-24 py-10">
-              <div id="faq" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-6 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+            <section id="contact" className="scroll-mt-24 py-8 sm:py-10">
+              <div id="faq" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
                 {/* Article Title with signature golden accent bar */}
-                <header className="mb-8">
-                  <h2 className="relative pb-3 text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
+                <header className="mb-6 sm:mb-8">
+                  <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
                     {data.faqSectionTitle || 'Frequently Asked Questions'}
                   </h2>
-                  <p className="mt-3 text-sm text-[#d6d6d6]/70 max-w-2xl leading-relaxed">
+                  <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-[#d6d6d6]/70 max-w-2xl leading-relaxed">
                     {data.faqSectionSubtitle || 'Answers to common questions about engineering workflow, systems design, and project collaboration.'}
                   </p>
                 </header>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {data.faqs.map((faq, idx) => (
                     <div
                       key={idx}
@@ -1129,13 +1137,13 @@ export default function App() {
                     >
                       <button
                         onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                        className="w-full flex items-center justify-between p-5 text-left text-sm font-medium text-[#fafafa] cursor-pointer"
+                        className="w-full flex items-center justify-between p-4 sm:p-5 text-left text-xs sm:text-sm font-medium text-[#fafafa] cursor-pointer"
                       >
-                        <span className="pr-4">{faq.question}</span>
+                        <span className="pr-3 sm:pr-4">{faq.question}</span>
                         <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-300 ${openFaq === idx ? 'rotate-180 text-[#ffdb70]' : 'text-[#d6d6d6]/40'}`} />
                       </button>
                       {openFaq === idx && (
-                        <div className="px-5 pb-5 text-sm leading-relaxed border-t pt-3.5 whitespace-pre-line text-[#d6d6d6] border-[#383838]/60 bg-[#1e1e1f]/60">
+                        <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs sm:text-sm leading-relaxed border-t pt-3 sm:pt-3.5 whitespace-pre-line text-[#d6d6d6] border-[#383838]/60 bg-[#1e1e1f]/60">
                           {faq.answer}
                         </div>
                       )}
@@ -1194,7 +1202,7 @@ export default function App() {
           </div>
 
           {/* Bottom Footer Bar — PRESERVED */}
-          <footer className="relative z-30 border-t border-[#383838] bg-[#03060a] text-[#d6d6d6]/60 py-8 px-6 text-xs">
+          <footer className="relative z-30 border-t border-[#383838] bg-[#03060a] text-[#d6d6d6]/60 py-8 px-3.5 sm:px-6 text-xs">
             <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6">
                 <a href="#about" className="transition-colors hover:text-[#ffdb70]">About</a>

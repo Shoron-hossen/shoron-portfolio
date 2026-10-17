@@ -73,7 +73,7 @@ export default function ProjectsPage({ onBackHome }: ProjectsPageProps) {
       </div>
 
       {/* Navigation header */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-[#121212]/90 border-b border-[#383838] text-[#fafafa] backdrop-blur-md px-6 py-3.5 transition-colors">
+      <header className="fixed inset-x-0 top-0 z-50 bg-[#121212]/90 border-b border-[#383838] text-[#fafafa] backdrop-blur-md px-3.5 sm:px-6 py-3.5 transition-colors">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={onBackHome || (() => { window.history.pushState({}, '', '/'); window.dispatchEvent(new PopStateEvent('popstate')); })}
@@ -85,27 +85,16 @@ export default function ProjectsPage({ onBackHome }: ProjectsPageProps) {
 
           <div className="flex items-center gap-2">
             <Code2 className="w-5 h-5 text-[#ffdb70]" />
-            <span className="font-semibold tracking-tight text-base text-[#fafafa]">Engineering Projects</span>
+            <span className="font-semibold tracking-tight text-sm sm:text-base text-[#fafafa]">Engineering Projects</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <a
-              href="/admin"
-              onClick={(e) => {
-                e.preventDefault();
-                window.history.pushState({}, '', '/admin');
-                window.dispatchEvent(new PopStateEvent('popstate'));
-              }}
-              className="text-xs font-semibold px-4 py-1.5 rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_16px_rgba(255,219,112,0.3)] transition-all cursor-pointer"
-            >
-              Admin Panel
-            </a>
-          </div>
+          {/* Spacer for balanced header alignment */}
+          <div className="w-10 sm:w-24" />
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20">
+      <main className="relative z-10 max-w-7xl mx-auto px-3.5 sm:px-6 pt-24 sm:pt-28 pb-16 sm:pb-20">
         
         {/* Header Title */}
         <div className="text-center max-w-2xl mx-auto mb-10">

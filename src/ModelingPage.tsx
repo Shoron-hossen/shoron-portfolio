@@ -69,7 +69,7 @@ export default function ModelingPage({ onBackHome }: ModelingPageProps) {
       </div>
 
       {/* Navigation header */}
-      <header className="fixed inset-x-0 top-0 z-50 bg-black/80 border-b border-[#383838] text-[#fafafa] backdrop-blur-md px-6 py-3.5 transition-colors">
+      <header className="fixed inset-x-0 top-0 z-50 bg-black/80 border-b border-[#383838] text-[#fafafa] backdrop-blur-md px-3.5 sm:px-6 py-3.5 transition-colors">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             onClick={onBackHome || (() => { window.history.pushState({}, '', '/'); window.dispatchEvent(new PopStateEvent('popstate')); })}
@@ -84,24 +84,13 @@ export default function ModelingPage({ onBackHome }: ModelingPageProps) {
             <span className="font-semibold tracking-tight text-sm sm:text-base text-[#fafafa]">Modeling & Creative Portfolio</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <a
-              href="/admin"
-              onClick={(e) => {
-                e.preventDefault();
-                window.history.pushState({}, '', '/admin');
-                window.dispatchEvent(new PopStateEvent('popstate'));
-              }}
-              className="text-xs font-semibold px-4 py-1.5 rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_16px_rgba(255,219,112,0.3)] transition-all cursor-pointer"
-            >
-              Admin CMS
-            </a>
-          </div>
+          {/* Spacer for balanced header alignment */}
+          <div className="w-10 sm:w-24" />
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20">
+      <main className="relative z-10 max-w-7xl mx-auto px-3.5 sm:px-6 pt-24 sm:pt-28 pb-16 sm:pb-20">
         
         {/* Header Title */}
         <div className="text-center max-w-2xl mx-auto mb-10">
@@ -159,7 +148,7 @@ export default function ModelingPage({ onBackHome }: ModelingPageProps) {
               <div className="text-center py-20 rounded-2xl border border-[#383838] bg-[#1e1e1f] text-[#d6d6d6]/60">
                 <Building2 className="w-10 h-10 text-[#d6d6d6]/40 mx-auto mb-2" />
                 <h3 className="text-base font-medium mb-1 text-[#fafafa]">No Organizations Added Yet</h3>
-                <p className="text-xs">Add brand campaigns in the Admin Panel.</p>
+                <p className="text-xs">No brand campaigns published yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -258,7 +247,7 @@ export default function ModelingPage({ onBackHome }: ModelingPageProps) {
               <div className="text-center py-20 rounded-2xl border border-[#383838] bg-[#1e1e1f] text-[#d6d6d6]/60">
                 <Camera className="w-10 h-10 text-[#d6d6d6]/40 mx-auto mb-2" />
                 <h3 className="text-base font-medium mb-1 text-[#fafafa]">No Photos in this Category</h3>
-                <p className="text-xs">Select another category or upload photos in Admin.</p>
+                <p className="text-xs">Select another category to view photos.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
