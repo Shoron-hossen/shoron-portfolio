@@ -154,7 +154,7 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
   phone: "01888668396",
   location: "330, West Shewrapara, Dhaka, Bangladesh",
   cvUrl: "",
-  avatarUrl: "/developer_portrait.png",
+  avatarUrl: "",
 
   socials: {
     github: "https://github.com/Shoron-hossen",
@@ -339,96 +339,9 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
     }
   ],
 
-  ventures: [
-    {
-      id: "v1",
-      name: "Nexus Web Solutions",
-      role: "Founder & Technical Lead",
-      description: "Digital engineering agency specializing in high-performance web applications, enterprise software architectures, and automated cloud workflows.",
-      imageUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1000",
-      websiteUrl: "https://shoron-blog.netlify.app",
-      category: "Tech & Software",
-      period: "2024 — Present"
-    },
-    {
-      id: "v2",
-      name: "Aura Creative Studio",
-      role: "Co-Founder & Creative Director",
-      description: "Brand management collective focused on modern aesthetic storytelling, commercial lookbooks, and high-impact media production.",
-      imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000",
-      websiteUrl: "https://shoron-blog.netlify.app",
-      category: "Creative & Media",
-      period: "2023 — Present"
-    }
-  ],
-
-  modelingOrganizations: [
-    {
-      id: "m1",
-      name: "Vogue Runway Collective",
-      campaignTitle: "Autumn/Winter Editorial Showcase",
-      role: "Featured Runway & Editorial Model",
-      year: "2024",
-      imageUrl: "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1000",
-      linkUrl: "https://shoron-blog.netlify.app",
-      category: "Fashion Brand"
-    },
-    {
-      id: "m2",
-      name: "Urban Lifestyle Apparel",
-      campaignTitle: "Contemporary Streetwear Lookbook",
-      role: "Brand Ambassador & Commercial Model",
-      year: "2024",
-      imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1000",
-      linkUrl: "https://shoron-blog.netlify.app",
-      category: "Commercial Brand"
-    },
-    {
-      id: "m3",
-      name: "Monochrome Fashion Magazine",
-      campaignTitle: "High-Contrast Studio Portrait Series",
-      role: "Cover Model & Editorial Feature",
-      year: "2023",
-      imageUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1000",
-      linkUrl: "https://shoron-blog.netlify.app",
-      category: "Editorial Magazine"
-    }
-  ],
-
-  modelingPhotos: [
-    {
-      id: "mp1",
-      title: "Crimson Velvet Studio Session",
-      category: "Editorial",
-      imageUrl: "/developer_portrait.png",
-      photographer: "Studio Lightworks",
-      year: "2024"
-    },
-    {
-      id: "mp2",
-      title: "Urban Minimalist Series",
-      category: "Commercial",
-      imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000",
-      photographer: "Aura Creative",
-      year: "2024"
-    },
-    {
-      id: "mp3",
-      title: "High Fashion Monochrome",
-      category: "Runway",
-      imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1000",
-      photographer: "Vogue Collective",
-      year: "2023"
-    },
-    {
-      id: "mp4",
-      title: "Golden Hour Exterior Shoot",
-      category: "Lookbook",
-      imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000",
-      photographer: "Horizon Visions",
-      year: "2024"
-    }
-  ]
+  ventures: [],
+  modelingOrganizations: [],
+  modelingPhotos: []
 };
 
 // ─── Cloudflare D1 Persistence Layer ────────────────────────────────
@@ -469,23 +382,7 @@ export class PortfolioStore {
 
     try {
       const parsed = JSON.parse(saved);
-      const merged: PortfolioData = { ...DEFAULT_PORTFOLIO_DATA, ...parsed };
-      if (!merged.educations || merged.educations.length === 0) {
-        merged.educations = DEFAULT_PORTFOLIO_DATA.educations;
-      }
-      if (!merged.skillPercentages || merged.skillPercentages.length === 0) {
-        merged.skillPercentages = DEFAULT_PORTFOLIO_DATA.skillPercentages;
-      }
-      if (!merged.ventures || merged.ventures.length === 0) {
-        merged.ventures = DEFAULT_PORTFOLIO_DATA.ventures;
-      }
-      if (!merged.modelingOrganizations || merged.modelingOrganizations.length === 0) {
-        merged.modelingOrganizations = DEFAULT_PORTFOLIO_DATA.modelingOrganizations;
-      }
-      if (!merged.modelingPhotos || merged.modelingPhotos.length === 0) {
-        merged.modelingPhotos = DEFAULT_PORTFOLIO_DATA.modelingPhotos;
-      }
-      return merged;
+      return { ...DEFAULT_PORTFOLIO_DATA, ...parsed };
     } catch {
       return DEFAULT_PORTFOLIO_DATA;
     }
@@ -513,21 +410,6 @@ export class PortfolioStore {
           const json = await res.json();
           if (json && json.exists && json.data) {
             const merged: PortfolioData = { ...DEFAULT_PORTFOLIO_DATA, ...json.data };
-            if (!merged.educations || merged.educations.length === 0) {
-              merged.educations = DEFAULT_PORTFOLIO_DATA.educations;
-            }
-            if (!merged.skillPercentages || merged.skillPercentages.length === 0) {
-              merged.skillPercentages = DEFAULT_PORTFOLIO_DATA.skillPercentages;
-            }
-            if (!merged.ventures || merged.ventures.length === 0) {
-              merged.ventures = DEFAULT_PORTFOLIO_DATA.ventures;
-            }
-            if (!merged.modelingOrganizations || merged.modelingOrganizations.length === 0) {
-              merged.modelingOrganizations = DEFAULT_PORTFOLIO_DATA.modelingOrganizations;
-            }
-            if (!merged.modelingPhotos || merged.modelingPhotos.length === 0) {
-              merged.modelingPhotos = DEFAULT_PORTFOLIO_DATA.modelingPhotos;
-            }
             this.setLocal(merged);
             callback(merged);
           }

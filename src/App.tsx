@@ -406,8 +406,8 @@ export default function App() {
          ═══════════════════════════════════════════════════════════════ */}
       <section className="relative isolate overflow-hidden">
         
-        {/* Background — Atmospheric dark gradient seamless transition to #121212 */}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,#03060a_0%,#060c12_24%,#0c1417_44%,#101a1a_57%,#121516_71%,#121212_86%,#121212_100%)] transition-colors"></div>
+        {/* Background — Atmospheric dark gradient seamless transition to #03060a obsidian */}
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,#03060a_0%,#060c12_24%,#0c1417_44%,#091317_57%,#060e12_71%,#03060a_86%,#03060a_100%)] transition-colors"></div>
 
         {/* Animated Stars — Enhanced with stars around developer photo card */}
         <div className="lp-gpu pointer-events-none absolute inset-0 z-10">
@@ -602,17 +602,20 @@ export default function App() {
               <div className="relative group w-full max-w-[305px]">
                 <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#121212]/50 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] p-2 transition-all duration-300 hover:border-white/20">
                   <div className="overflow-hidden rounded-[16px] aspect-[4/5] bg-black/20">
-                    <img
-                      src={data.avatarUrl || '/developer_portrait.png'}
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (!target.src.endsWith('/developer_portrait.png')) {
-                          target.src = '/developer_portrait.png';
-                        }
-                      }}
-                      alt={`${data.name} — ${data.role}`}
-                      className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
-                    />
+                    {data.avatarUrl ? (
+                      <img
+                        src={data.avatarUrl}
+                        alt={`${data.name} — ${data.role}`}
+                        className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-[#1e1e1f] flex flex-col items-center justify-center text-center p-6">
+                        <div className="w-20 h-20 rounded-full bg-[#ffdb70]/10 border border-[#ffdb70]/30 flex items-center justify-center text-2xl font-bold text-[#ffdb70] mb-2 shadow-inner">
+                          {data.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </div>
+                        <span className="text-xs text-[#d6d6d6]/60 font-mono">Profile Photo</span>
+                      </div>
+                    )}
                   </div>
                   <div className="px-3.5 py-3 text-left">
                     <span className="text-sm font-semibold block leading-tight text-white">{data.name}</span>
@@ -692,16 +695,18 @@ export default function App() {
               aria-hidden="true"
               className="block w-full origin-bottom scale-[1.6] select-none object-cover brightness-[0.7] saturate-[0.85] md:scale-[1.35]"
             />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-[#03060a]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-[#03060a]/70 to-[#03060a]" />
           </motion.div>
 
+          {/* Section Base Blend — Guarantees 0px seam or bar between Hero and Content */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent via-[#03060a]/80 to-[#03060a] z-30" />
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
           MAIN CONTENT — SEAMLESS OBSIDIAN BACKGROUND MATCHING HERO AREA (CARDS UNTOUCHED)
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="relative z-10 bg-transparent pt-8">
+      <div className="relative z-10 bg-transparent pt-4">
         <section className="relative px-6 py-8">
           <div className="mx-auto max-w-6xl">
 
@@ -1021,6 +1026,7 @@ export default function App() {
             </section>
 
             {/* ── Ventures & Entrepreneurship Section (Directly under Projects) ── */}
+            {data.ventures && data.ventures.length > 0 && (
             <section id="ventures" className="scroll-mt-24 py-10">
               <div className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-6 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
@@ -1099,6 +1105,7 @@ export default function App() {
                 </div>
               </div>
             </section>
+            )}
 
             {/* ── FAQ Section — Exact Same Alignment & Architecture as Resume and Portfolio ── */}
             <section id="contact" className="scroll-mt-24 py-10">

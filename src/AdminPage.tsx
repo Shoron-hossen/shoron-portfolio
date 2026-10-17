@@ -34,6 +34,53 @@ interface AdminPageProps {
 
 type TabKey = 'profile' | 'hero' | 'skills' | 'experience' | 'ventures' | 'modeling' | 'faq' | 'projects' | 'settings';
 
+const inputClass = "w-full bg-black/60 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-forest-bright/60 focus:ring-1 focus:ring-forest-bright/30 transition-all";
+const labelClass = "block text-xs font-medium text-slate-300 mb-1.5";
+const cardClass = "bg-slate-900/80 border border-white/10 rounded-2xl p-6";
+
+interface InputFieldProps {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+  textarea?: boolean;
+  rows?: number;
+}
+
+function InputField({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  placeholder = '',
+  textarea = false,
+  rows = 3
+}: InputFieldProps) {
+  return (
+    <div>
+      <label className={labelClass}>{label}</label>
+      {textarea ? (
+        <textarea
+          rows={rows}
+          value={value ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={inputClass}
+        />
+      ) : (
+        <input
+          type={type}
+          value={value ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={inputClass}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage({ onBackHome }: AdminPageProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -185,36 +232,6 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
     }
   };
 
-  // ── Input Components ──
-
-  const inputClass = "w-full bg-black/60 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-forest-bright/60 focus:ring-1 focus:ring-forest-bright/30 transition-all";
-  const labelClass = "block text-xs font-medium text-slate-300 mb-1.5";
-  const cardClass = "bg-slate-900/80 border border-white/10 rounded-2xl p-6";
-
-  const InputField = ({ label, value, onChange, type = 'text', placeholder = '', textarea = false, rows = 3 }: {
-    label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; textarea?: boolean; rows?: number;
-  }) => (
-    <div>
-      <label className={labelClass}>{label}</label>
-      {textarea ? (
-        <textarea
-          rows={rows}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={inputClass}
-        />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={inputClass}
-        />
-      )}
-    </div>
-  );
 
   // ── Tabs Config ──
 
@@ -402,12 +419,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                 <Image className="w-4 h-4 text-forest-bright" /> Profile Photo
               </h3>
 
-              <div className="relative rounded-xl overflow-hidden border border-white/10 mb-4">
-                <img
-                  src={data.avatarUrl || '/developer_portrait.png'}
-                  alt="Profile"
-                  className="w-full h-64 object-cover"
-                />
+              <div className="relative rounded-xl overflow-hidden border border-white/10 mb-4 bg-black/40">
+                {data.avatarUrl ? (
+                  <img
+                    src={data.avatarUrl}
+                    alt="Profile"
+                    className="w-full h-64 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-64 flex flex-col items-center justify-center text-center p-6 text-white/50">
+                    <Image className="w-12 h-12 mb-2 text-[#ffdb70]/50" />
+                    <span className="text-xs">No photo uploaded yet</span>
+                  </div>
+                )}
               </div>
 
               <InputField label="Photo URL" value={data.avatarUrl} onChange={(v) => setData({ ...data, avatarUrl: v })} placeholder="https://... or upload below" />

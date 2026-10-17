@@ -173,18 +173,19 @@ export default function ModelingPage({ onBackHome }: ModelingPageProps) {
                     className="group relative flex flex-col rounded-[20px] p-4 sm:p-5 border border-[#383838] bg-[#1e1e1f] hover:border-[#ffdb70]/50 shadow-[0_16px_30px_rgba(0,0,0,0.25)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-all"
                   >
                     {/* Campaign / Brand Image */}
-                    <div className="relative overflow-hidden rounded-[16px] h-48 w-full bg-[#121212] mb-4 border border-[#383838]/70">
-                      <img
-                        src={org.imageUrl || '/developer_portrait.png'}
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (!target.src.includes('unsplash')) {
-                            target.src = 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1000';
-                          }
-                        }}
-                        alt={org.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                    <div className="relative overflow-hidden rounded-[16px] h-48 w-full bg-[#121212] mb-4 border border-[#383838]/70 flex items-center justify-center">
+                      {org.imageUrl ? (
+                        <img
+                          src={org.imageUrl}
+                          alt={org.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-[#ffdb70]/60">
+                          <Building2 className="w-10 h-10 mb-1" />
+                          <span className="text-[11px] text-[#d6d6d6]/60">{org.name}</span>
+                        </div>
+                      )}
                       {org.category && (
                         <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border backdrop-blur-md bg-[#1e1e1f]/90 text-[#ffdb70] border-[#383838]">
                           {org.category}
