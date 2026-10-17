@@ -211,8 +211,58 @@ export default function App() {
     : (data.name.split(' ').find(w => w.length > 2)?.toLowerCase() || data.name.toLowerCase());
 
   return (
-    <div className="dark bg-black text-[#d6d6d6] relative min-h-screen font-sans transition-colors duration-300 overflow-x-hidden">
+    <div className="dark bg-[#03060a] text-[#d6d6d6] relative min-h-screen font-sans transition-colors duration-300 overflow-x-hidden">
       
+      {/* High-Resolution Ambient Starfield across website (GPU Hardware Accelerated, Zero Lag) */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        {[
+          { left: '5%', top: '8%', dur: '4.2s', delay: '0.2s', size: 'h-1 w-1' },
+          { left: '14%', top: '18%', dur: '3.6s', delay: '1.1s', size: 'h-1.5 w-1.5' },
+          { left: '22%', top: '10%', dur: '5.1s', delay: '2.3s', size: 'h-1 w-1' },
+          { left: '31%', top: '24%', dur: '4.0s', delay: '0.7s', size: 'h-1.5 w-1.5' },
+          { left: '42%', top: '12%', dur: '6.2s', delay: '1.8s', size: 'h-1 w-1' },
+          { left: '56%', top: '20%', dur: '3.8s', delay: '0.4s', size: 'h-1.5 w-1.5' },
+          { left: '68%', top: '9%', dur: '5.5s', delay: '2.6s', size: 'h-1 w-1' },
+          { left: '78%', top: '26%', dur: '4.4s', delay: '1.2s', size: 'h-1.5 w-1.5' },
+          { left: '88%', top: '14%', dur: '5.9s', delay: '0.9s', size: 'h-1 w-1' },
+          { left: '95%', top: '22%', dur: '3.5s', delay: '2.0s', size: 'h-1.5 w-1.5' },
+          
+          { left: '8%', top: '38%', dur: '4.7s', delay: '1.4s', size: 'h-1 w-1' },
+          { left: '19%', top: '48%', dur: '5.8s', delay: '0.5s', size: 'h-1.5 w-1.5' },
+          { left: '33%', top: '42%', dur: '3.9s', delay: '2.2s', size: 'h-1 w-1' },
+          { left: '48%', top: '52%', dur: '6.0s', delay: '1.6s', size: 'h-1.5 w-1.5' },
+          { left: '62%', top: '44%', dur: '4.3s', delay: '0.8s', size: 'h-1 w-1' },
+          { left: '74%', top: '56%', dur: '5.2s', delay: '2.5s', size: 'h-1.5 w-1.5' },
+          { left: '86%', top: '46%', dur: '3.7s', delay: '1.0s', size: 'h-1 w-1' },
+          { left: '94%', top: '40%', dur: '5.3s', delay: '1.9s', size: 'h-1.5 w-1.5' },
+          
+          { left: '11%', top: '68%', dur: '5.4s', delay: '2.1s', size: 'h-1 w-1' },
+          { left: '26%', top: '78%', dur: '4.1s', delay: '0.6s', size: 'h-1.5 w-1.5' },
+          { left: '40%', top: '72%', dur: '6.3s', delay: '1.7s', size: 'h-1 w-1' },
+          { left: '54%', top: '82%', dur: '3.6s', delay: '2.4s', size: 'h-1.5 w-1.5' },
+          { left: '70%', top: '74%', dur: '5.0s', delay: '0.9s', size: 'h-1 w-1' },
+          { left: '84%', top: '84%', dur: '4.5s', delay: '1.5s', size: 'h-1.5 w-1.5' },
+          { left: '92%', top: '76%', dur: '5.7s', delay: '2.8s', size: 'h-1 w-1' },
+
+          { left: '6%', top: '90%', dur: '4.8s', delay: '1.3s', size: 'h-1 w-1' },
+          { left: '22%', top: '93%', dur: '5.6s', delay: '2.2s', size: 'h-1.5 w-1.5' },
+          { left: '47%', top: '91%', dur: '4.1s', delay: '0.4s', size: 'h-1 w-1' },
+          { left: '65%', top: '94%', dur: '6.2s', delay: '1.8s', size: 'h-1.5 w-1.5' },
+          { left: '88%', top: '92%', dur: '5.0s', delay: '2.7s', size: 'h-1 w-1' },
+        ].map((star, idx) => (
+          <span
+            key={idx}
+            className={`lp-star ${star.size}`}
+            style={{
+              left: star.left,
+              top: star.top,
+              '--dur': star.dur,
+              '--delay': star.delay,
+            } as React.CSSProperties}
+          />
+        ))}
+      </div>
+
       {/* Dynamic Header — Transparent with Glassmorphic Blur on Scroll */}
       <header className={`lp-gpu fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         isScrolled
@@ -359,24 +409,32 @@ export default function App() {
         {/* Background — Atmospheric dark gradient seamless transition to #121212 */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,#03060a_0%,#060c12_24%,#0c1417_44%,#101a1a_57%,#121516_71%,#121212_86%,#121212_100%)] transition-colors"></div>
 
-        {/* Animated Stars — UNTOUCHED */}
+        {/* Animated Stars — Enhanced with stars around developer photo card */}
         <div className="lp-gpu pointer-events-none absolute inset-0 z-10">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             {[
               { left: '84.182%', top: '8.850%', dur: '5.949s', delay: '0.101s' },
-                { left: '8.425%', top: '51.412%', dur: '5.516s', delay: '1.879s' },
-                { left: '21.101%', top: '22.892%', dur: '3.545s', delay: '1.894s' },
-                { left: '26.151%', top: '7.746%', dur: '4.636s', delay: '2.575s' },
-                { left: '89.217%', top: '3.141%', dur: '5.912s', delay: '1.773s' },
-              ].map((star, idx) => (
-                <span
-                  key={idx}
-                  className="lp-star h-0.5 w-0.5"
-                  style={{ left: star.left, top: star.top, '--dur': star.dur, '--delay': star.delay } as React.CSSProperties}
-                />
-              ))}
-            </div>
+              { left: '8.425%', top: '51.412%', dur: '5.516s', delay: '1.879s' },
+              { left: '21.101%', top: '22.892%', dur: '3.545s', delay: '1.894s' },
+              { left: '26.151%', top: '7.746%', dur: '4.636s', delay: '2.575s' },
+              { left: '89.217%', top: '3.141%', dur: '5.912s', delay: '1.773s' },
+              // Stars directly around and under the photo area (right side)
+              { left: '72%', top: '38%', dur: '4.2s', delay: '0.5s' },
+              { left: '91%', top: '42%', dur: '5.1s', delay: '1.2s' },
+              { left: '68%', top: '52%', dur: '3.8s', delay: '2.0s' },
+              { left: '86%', top: '58%', dur: '4.7s', delay: '0.9s' },
+              { left: '75%', top: '65%', dur: '5.6s', delay: '1.6s' },
+              { left: '92%', top: '70%', dur: '4.0s', delay: '2.4s' },
+              { left: '80%', top: '78%', dur: '6.0s', delay: '0.3s' },
+            ].map((star, idx) => (
+              <span
+                key={idx}
+                className="lp-star h-1 w-1"
+                style={{ left: star.left, top: star.top, '--dur': star.dur, '--delay': star.delay } as React.CSSProperties}
+              />
+            ))}
           </div>
+        </div>
 
         {/* Hero Layout: Left Side Profile, Right Side Photo — Raised slightly for balanced spacing */}
         <div id="about" className="relative z-30 mx-auto flex max-w-6xl flex-col items-center px-6 pt-32 pb-8 text-left sm:pt-36 md:pt-38">
@@ -634,16 +692,16 @@ export default function App() {
               aria-hidden="true"
               className="block w-full origin-bottom scale-[1.6] select-none object-cover brightness-[0.7] saturate-[0.85] md:scale-[1.35]"
             />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent via-black/90 to-black" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-[#03060a]" />
           </motion.div>
 
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          MAIN CONTENT — DEEP BLACK BACKGROUND (CARDS UNTOUCHED)
+          MAIN CONTENT — SEAMLESS OBSIDIAN BACKGROUND MATCHING HERO AREA (CARDS UNTOUCHED)
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="relative z-30 bg-black pt-8">
+      <div className="relative z-10 bg-transparent pt-8">
         <section className="relative px-6 py-8">
           <div className="mx-auto max-w-6xl">
 
@@ -1087,7 +1145,7 @@ export default function App() {
         {/* ═══════════════════════════════════════════════════════════════
             FOOTER LANDSCAPE SHOWCASE — Text centered with bottom 30% tucked into grass
            ═══════════════════════════════════════════════════════════════ */}
-        <section className="relative overflow-hidden bg-black pt-16 pb-0">
+        <section className="relative overflow-hidden bg-[#03060a] pt-16 pb-0">
           
           <div className="relative h-[380px] sm:h-[450px] md:h-[500px] w-full flex items-center justify-center overflow-hidden">
             {/* Background Mountains */}
@@ -1097,7 +1155,7 @@ export default function App() {
               aria-hidden="true"
               className="absolute inset-0 h-full w-full object-cover object-center brightness-[0.45] contrast-[1.15]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#03060a] via-transparent to-transparent" />
             
             {/* Name: Tucked slightly into foliage — raised for clear visibility while maintaining landscape depth */}
             <div
@@ -1124,12 +1182,12 @@ export default function App() {
                 aria-hidden="true"
                 className="h-full w-full object-cover object-bottom brightness-[0.65] saturate-[0.85]"
               />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#03060a] to-transparent" />
             </div>
           </div>
 
           {/* Bottom Footer Bar — PRESERVED */}
-          <footer className="relative z-30 border-t border-[#383838] bg-black text-[#d6d6d6]/60 py-8 px-6 text-xs">
+          <footer className="relative z-30 border-t border-[#383838] bg-[#03060a] text-[#d6d6d6]/60 py-8 px-6 text-xs">
             <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-6">
                 <a href="#about" className="transition-colors hover:text-[#ffdb70]">About</a>

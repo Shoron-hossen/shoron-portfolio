@@ -45,13 +45,31 @@ export default function ProjectsPage({ onBackHome }: ProjectsPageProps) {
   });
 
   return (
-    <div className="relative min-h-screen dark bg-black text-[#d6d6d6] font-sans overflow-x-hidden selection:bg-[#ffdb70] selection:text-[#121212]">
+    <div className="relative min-h-screen dark bg-[#03060a] text-[#d6d6d6] font-sans overflow-x-hidden selection:bg-[#ffdb70] selection:text-[#121212]">
       
-      {/* Background Atmosphere — Pure Black with Signature Amber Glow */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-black" />
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#ffdb70]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-[#ffdb70]/[0.03] rounded-full blur-3xl pointer-events-none" />
+      {/* Background Atmosphere — Seamless Obsidian #03060a with Ambient Stars */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[#03060a]" />
+        {[
+          { left: '6%', top: '12%', dur: '4.2s', delay: '0.3s' },
+          { left: '20%', top: '25%', dur: '5.1s', delay: '1.2s' },
+          { left: '38%', top: '15%', dur: '3.7s', delay: '2.1s' },
+          { left: '62%', top: '22%', dur: '4.8s', delay: '0.8s' },
+          { left: '82%', top: '10%', dur: '5.5s', delay: '1.5s' },
+          { left: '92%', top: '30%', dur: '3.9s', delay: '2.4s' },
+          { left: '15%', top: '55%', dur: '4.5s', delay: '0.6s' },
+          { left: '48%', top: '65%', dur: '5.8s', delay: '1.9s' },
+          { left: '75%', top: '60%', dur: '4.1s', delay: '2.7s' },
+          { left: '88%', top: '75%', dur: '5.2s', delay: '0.4s' },
+          { left: '28%', top: '85%', dur: '4.6s', delay: '1.7s' },
+          { left: '68%', top: '90%', dur: '5.9s', delay: '2.3s' },
+        ].map((star, idx) => (
+          <span
+            key={idx}
+            className="lp-star h-1 w-1"
+            style={{ left: star.left, top: star.top, '--dur': star.dur, '--delay': star.delay } as React.CSSProperties}
+          />
+        ))}
       </div>
 
       {/* Navigation header */}
