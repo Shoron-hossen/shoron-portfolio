@@ -1,0 +1,14 @@
+name = "shoron-portfolio"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-23"
+
+# Cloudflare D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "shoron-portfolio-db"
+database_id = "e88f189b-8f3f-435f-9203-1875d67eb47c"
+
+# Cloudflare R2 Storage
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "shoron-portfolio-media"

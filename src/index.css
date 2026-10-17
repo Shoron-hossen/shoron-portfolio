@@ -2,48 +2,107 @@
 
 @layer base {
   :root {
-    --color-forest: #22543d;
-    --color-forest-bright: #54a967;
+    /* ─── codewithsadee/vcard-personal-portfolio Theme Tokens ─── */
+    --vcard-smoky-black: #121212;         /* hsl(0, 0%, 7%) — exact page background */
+    --vcard-eerie-black-1: #202022;       /* hsl(240, 2%, 13%) */
+    --vcard-eerie-black-2: #1e1e1f;       /* hsl(240, 2%, 12%) — exact card background */
+    --vcard-jet: #383838;                 /* hsl(0, 0%, 22%) — exact border */
+    --vcard-onyx: #2b2b2c;                /* hsl(240, 1%, 17%) */
+    --vcard-gold: #ffdb70;                /* hsl(45, 100%, 72%) — exact signature saffron/gold accent */
+    --vcard-vegas-gold: #ceb15a;          /* hsl(45, 54%, 58%) */
+    --vcard-light-gray: #d6d6d6;          /* hsl(0, 0%, 84%) — exact body text */
+    --vcard-white-2: #fafafa;             /* hsl(0, 0%, 98%) — exact heading text */
+
+    --accent-main: #ffdb70;
+    --accent-hover: #ceb15a;
+    --accent-contrast: #121212;
+    --color-forest: #ffdb70;
+    --color-forest-bright: #ffdb70;
   }
 
-  body {
+  html, body {
     background-color: #000000;
-    color: #ffffff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #d6d6d6;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     overflow-x: hidden;
   }
+
+  @media (min-width: 1024px) {
+    html.lenis, html.lenis body {
+      height: auto;
+    }
+    .lenis.lenis-smooth {
+      scroll-behavior: auto !important;
+    }
+    .lenis.lenis-smooth [data-lenis-prevent] {
+      overscroll-behavior: contain;
+    }
+    .lenis.lenis-stopped {
+      overflow: hidden;
+    }
+    .lenis.lenis-smooth iframe {
+      pointer-events: none;
+    }
+  }
 }
 
-/* Custom styles for Freebuff Landing Page */
-.text-forest-bright {
-  color: #54a967;
-}
-
+/* ─── High-Contrast Bespoke Button Styling (Vercel / Linear / Apple Standard) ─── */
 .bg-forest-bright {
-  background-color: #54a967;
+  background-color: #0f172a;
+  color: #ffffff !important;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bg-forest-bright:hover {
+  background-color: #1e293b;
+  transform: translateY(-1px);
 }
 
+.dark .bg-forest-bright {
+  background-color: #ffffff;
+  color: #050505 !important;
+  font-weight: 600;
+}
+.dark .bg-forest-bright:hover {
+  background-color: #f4f4f5;
+  color: #000000 !important;
+  transform: translateY(-1px);
+}
+
+.text-forest-bright {
+  color: #2563eb;
+}
+.dark .text-forest-bright {
+  color: #3b82f6;
+}
+
+.bg-forest-bright\/10,
+.bg-forest-bright\/15,
 .bg-forest\/15 {
-  background-color: rgba(34, 84, 61, 0.15);
+  background-color: var(--accent-soft);
 }
 
+.border-forest-bright\/30,
+.border-forest-bright\/40,
 .border-forest\/40 {
-  border-color: rgba(34, 84, 61, 0.4);
+  border-color: var(--accent-border);
 }
 
-/* Star animations */
+/* ─── Selection ───────────────────────────────────────────────────────── */
+::selection {
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #0f172a;
+}
+.dark ::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+}
+
+/* ─── Star animations ─────────────────────────────────────────────────── */
 @keyframes twinkle {
-  0%, 100% {
-    opacity: var(--min, 0.3);
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: var(--max, 1);
-    transform: scale(1.2);
-    box-shadow: 0 0 var(--glow, 4px) rgba(255, 255, 255, 0.8);
-  }
+  0%, 100% { opacity: var(--min, 0.3); transform: scale(0.8); }
+  50% { opacity: var(--max, 1); transform: scale(1.2); box-shadow: 0 0 var(--glow, 4px) rgba(255,255,255,0.8); }
 }
-
 .lp-star {
   position: absolute;
   border-radius: 9999px;
@@ -52,52 +111,93 @@
   animation-delay: var(--delay, 0s);
 }
 
-/* Shooting star animation */
 @keyframes shootingStar {
-  0% {
-    transform: translate(0, 0) opacity(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(var(--dx, 350px), var(--dy, 200px));
-    opacity: 0;
-  }
+  0% { transform: translate(0,0); opacity: 0; }
+  10% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(var(--dx, 350px), var(--dy, 200px)); opacity: 0; }
 }
-
 .lp-shooting-star {
   position: absolute;
   pointer-events: none;
-  animation: shootingStar var(--dur, 6s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: shootingStar var(--dur, 6s) cubic-bezier(0.4,0,0.2,1) infinite;
   animation-delay: var(--delay, 0s);
 }
 
-/* Font styles */
+/* ─── Typography ──────────────────────────────────────────────────────── */
 .lp-hero-heading {
   letter-spacing: -0.03em;
-  font-weight: 500;
+  font-weight: 600;
 }
-
 .lp-serif {
   font-family: Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
-/* Custom Scrollbar */
+/* ─── Custom Scrollbar ────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #222;
-  border-radius: 4px;
+  background: #e4e4e7;
+  border-radius: 6px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #27272a;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #333;
+  background: #3f3f46;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   vCard Style Cards & Pills (codewithsadee/vcard-personal-portfolio)
+   ════════════════════════════════════════════════════════════════════════ */
+
+.waterdrop-card,
+.vcard-card {
+  position: relative;
+  background: #1e1e1f; /* --eerie-black-2 */
+  border: 1px solid #383838; /* --jet */
+  border-radius: 20px;
+  box-shadow: 0 16px 30px hsla(0, 0%, 0%, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.waterdrop-card:hover,
+.vcard-card:hover {
+  transform: translateY(-2px);
+  border-color: #4a4a4a;
+  box-shadow: 0 20px 40px hsla(0, 0%, 0%, 0.35);
+}
+
+.waterdrop-pill,
+.vcard-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  background: #212123;
+  border: 1px solid #383838;
+  color: #d6d6d6;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.waterdrop-pill:hover,
+.vcard-pill:hover {
+  background: #28282a;
+  border-color: #ffdb70;
+  color: #ffdb70;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
 }
