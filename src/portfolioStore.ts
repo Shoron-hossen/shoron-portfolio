@@ -154,7 +154,7 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
   phone: "01888668396",
   location: "330, West Shewrapara, Dhaka, Bangladesh",
   cvUrl: "",
-  avatarUrl: "",
+  avatarUrl: "/developer_portrait.png",
 
   socials: {
     github: "https://github.com/Shoron-hossen",

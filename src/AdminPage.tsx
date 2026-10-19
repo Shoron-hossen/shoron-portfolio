@@ -141,10 +141,31 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
     setTimeout(() => setErrorMsg(''), 5000);
   };
 
+  const sanitizeUrl = (url?: string): string => {
+    if (!url) return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
   const handleSaveAll = async () => {
     setIsSaving(true);
     try {
-      await PortfolioStore.saveData(data);
+      const sanitized: PortfolioData = {
+        ...data,
+        cvUrl: sanitizeUrl(data.cvUrl),
+        socials: {
+          github: sanitizeUrl(data.socials.github),
+          linkedin: sanitizeUrl(data.socials.linkedin),
+          facebook: sanitizeUrl(data.socials.facebook),
+          instagram: sanitizeUrl(data.socials.instagram),
+          twitter: sanitizeUrl(data.socials.twitter),
+          youtube: sanitizeUrl(data.socials.youtube),
+        }
+      };
+      setData(sanitized);
+      await PortfolioStore.saveData(sanitized);
       showNotice('All changes saved successfully to Cloudflare D1!');
     } catch {
       showError('Failed to save. Check your connection.');
@@ -625,13 +646,20 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
               </div>
             </div>
 
-            {/* Section Heading Title */}
-            <div>
+            {/* Section Heading & CV Download Link */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField
                 label="Resume Section Title (Homepage)"
                 value={data.experienceSectionTitle || 'Resume'}
                 onChange={(v) => setData({ ...data, experienceSectionTitle: v })}
                 placeholder="Resume"
+              />
+              <InputField
+                label="CV / Resume Document URL (Download Link)"
+                value={data.cvUrl || ''}
+                onChange={(v) => setData({ ...data, cvUrl: v })}
+                placeholder="https://... (Google Drive, PDF, Cloudflare R2 link)"
+                type="url"
               />
             </div>
 

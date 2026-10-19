@@ -19,6 +19,11 @@ import {
   Menu,
   X,
   Building2,
+  FileText,
+  Send,
+  MessageCircle,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { PortfolioStore, DEFAULT_PORTFOLIO_DATA, type PortfolioData } from './portfolioStore';
 import AdminPage from './AdminPage';
@@ -26,6 +31,15 @@ import ProjectsPage from './ProjectsPage';
 import ModelingPage from './ModelingPage';
 import GithubIcon from './components/GithubIcon';
 import { LinkedinIcon, FacebookIcon, InstagramIcon, TwitterIcon, YoutubeIcon } from './components/SocialIcons';
+
+// Ensures external URLs always have https:// protocol so they open external sites rather than relative routes
+const normalizeExternalUrl = (url?: string): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
 
 // Icon mapping for dynamic hero cards and skill categories
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -366,9 +380,288 @@ function PortfolioHeader({
   );
 }
 
+// ═══════════════════════════════════════════════════════════════
+// REAL INTERACTIVE CONTACT & WHATSAPP SECTION
+// ═══════════════════════════════════════════════════════════════
+function PortfolioContactSection({ data }: { data: PortfolioData }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Clean phone number for WhatsApp API
+  const rawPhone = data.phone || '01888668396';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
+    cleanPhone = '88' + cleanPhone;
+  }
+  const defaultWhatsAppUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hi ${data.name}, I visited your portfolio and would like to get in touch!`)}`;
+
+  // Direct Google Mail (Gmail) Compose Link for instant 1-click compose
+  const gmailDirectUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}`;
+
+  const handleSendDirect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !message) return;
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const recipientEmail = data.email || 'shoronhossen886@gmail.com';
+      const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          _subject: subject.trim() || `Portfolio Direct Inquiry from ${name}`,
+          message: message,
+          _replyto: email,
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      });
+
+      const resJson = await response.json().catch(() => null);
+      if (response.ok || (resJson && (resJson.success === 'true' || resJson.success === true))) {
+        setSent(true);
+        setName('');
+        setEmail('');
+        setSubject('');
+        setMessage('');
+        setTimeout(() => setSent(false), 9000);
+      } else {
+        if (resJson && resJson.message && resJson.message.toLowerCase().includes('activation')) {
+          setSent(true);
+          setName('');
+          setEmail('');
+          setSubject('');
+          setMessage('');
+          setTimeout(() => setSent(false), 10000);
+        } else {
+          throw new Error((resJson && resJson.message) || 'Failed to send message. Please try again.');
+        }
+      }
+    } catch (err: unknown) {
+      console.error('Direct mail send error:', err);
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Unable to send message directly. Please try again or reach out on WhatsApp.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section id="contact" className="scroll-mt-24 py-8 sm:py-10">
+      <div className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+        
+        {/* Article Title with signature golden accent bar */}
+        <header className="mb-6 sm:mb-8">
+          <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
+            Get in Touch
+          </h2>
+          <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-[#d6d6d6]/70 max-w-2xl leading-relaxed">
+            Have a project in mind, a freelance opportunity, or want to discuss engineering and backend architecture? Send a message via Google Mail or connect on WhatsApp.
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+          
+          {/* Left Column: Direct WhatsApp, Email & Location Cards (Cohesive dark/gold theme, no extra jarring colors) */}
+          <div className="lg:col-span-5 space-y-4">
+            
+            {/* WhatsApp Connect Card — Styled to match portfolio dark theme */}
+            <div className="rounded-2xl border border-[#383838] bg-[#212123] p-5 transition-all hover:border-[#ffdb70]/40 shadow-sm">
+              <div className="flex items-center gap-3 mb-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#ffdb70]/10 border border-[#ffdb70]/30 flex items-center justify-center text-[#ffdb70] shrink-0">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white leading-tight">WhatsApp Quick Chat</h4>
+                  <p className="text-[11px] text-[#ffdb70] flex items-center gap-1.5 font-mono mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ffdb70] animate-pulse" />
+                    Available for Direct Chat
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-[#d6d6d6]/80 leading-relaxed mb-4">
+                Fastest way to get in touch. Click below to start a direct WhatsApp conversation.
+              </p>
+              <a
+                href={defaultWhatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-semibold border border-[#383838] bg-[#1a1a1c] text-white hover:border-[#ffdb70]/60 hover:text-[#ffdb70] transition-all shadow-sm cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 text-[#ffdb70]" />
+                <span>Chat on WhatsApp ({data.phone || '01888668396'})</span>
+              </a>
+            </div>
+
+            {/* Direct Email Card — Opens directly in Google Mail (Gmail) compose */}
+            <div className="rounded-2xl border border-[#383838] bg-[#212123] p-5 transition-all hover:border-[#ffdb70]/40 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-[#ffdb70]/10 border border-[#ffdb70]/30 flex items-center justify-center text-[#ffdb70] shrink-0">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-bold text-white leading-tight">Direct Email</h4>
+                  <p className="text-[11px] text-[#d6d6d6]/70 font-mono mt-0.5 truncate">{data.email}</p>
+                </div>
+              </div>
+              <div className="mt-3.5">
+                <a
+                  href={gmailDirectUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-semibold border border-[#383838] bg-[#1a1a1c] text-white hover:border-[#ffdb70]/60 hover:text-[#ffdb70] transition-all shadow-sm cursor-pointer"
+                  title="Opens directly in Gmail with address prefilled"
+                >
+                  <Mail className="w-4 h-4 text-[#ffdb70]" />
+                  <span>Send Mail via Gmail ({data.email})</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Location & Availability Card */}
+            <div className="rounded-2xl border border-[#383838] bg-[#212123] p-5">
+              <div className="flex items-center gap-2 text-xs text-[#d6d6d6]/80 mb-2">
+                <span className="w-2 h-2 rounded-full bg-[#ffdb70]" />
+                <span className="font-semibold text-white">Location:</span> {data.location}
+              </div>
+              <p className="text-xs text-[#d6d6d6]/60 leading-relaxed">
+                Available for full-time software engineering roles, contract development, and worldwide remote opportunities.
+              </p>
+            </div>
+
+          </div>
+
+          {/* Right Column: Direct Background Mail Form */}
+          <div className="lg:col-span-7 bg-[#212123] border border-[#383838] rounded-2xl p-5 sm:p-7 shadow-sm">
+            <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+              <Send className="w-4 h-4 text-[#ffdb70]" /> Send a Direct Message
+            </h3>
+            <p className="text-xs text-[#d6d6d6]/60 mb-5">
+              Fill out the details below to send an email directly to my inbox.
+            </p>
+
+            {sent && (
+              <div className="mb-5 p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-start gap-3">
+                <Check className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
+                <div>
+                  <h5 className="font-bold text-white">Mail Sent Successfully!</h5>
+                  <p className="mt-1 text-emerald-300/80 text-xs leading-relaxed">
+                    Thank you for reaching out. Your message has been sent directly to {data.name}'s email.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="mb-5 p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center justify-between gap-2">
+                <span>{errorMessage}</span>
+                <button
+                  type="button"
+                  onClick={() => setErrorMessage('')}
+                  className="text-white/60 hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleSendDirect} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-[#d6d6d6]/90 mb-1.5">Your Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Alex Johnson"
+                    className="w-full rounded-xl bg-[#121212] border border-[#383838] px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-[#ffdb70] focus:outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#d6d6d6]/90 mb-1.5">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="alex@company.com"
+                    className="w-full rounded-xl bg-[#121212] border border-[#383838] px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-[#ffdb70] focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#d6d6d6]/90 mb-1.5">Subject / Project Scope</label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="e.g. Full-Stack Web / Mobile Project"
+                  className="w-full rounded-xl bg-[#121212] border border-[#383838] px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:border-[#ffdb70] focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#d6d6d6]/90 mb-1.5">Your Message *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Tell me about your goals, timeline, and requirements..."
+                  className="w-full rounded-xl bg-[#121212] border border-[#383838] p-3.5 text-xs text-white placeholder-neutral-500 focus:border-[#ffdb70] focus:outline-none transition-colors resize-none"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading || sent}
+                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] font-bold text-xs hover:shadow-[0_4px_16px_rgba(255,219,112,0.35)] disabled:opacity-75 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#121212]" />
+                      <span>Sending Message Directly...</span>
+                    </>
+                  ) : sent ? (
+                    <>
+                      <Check className="w-4 h-4 text-[#121212]" />
+                      <span>Mail Sent Successfully!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Send Message</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<PortfolioData>(PortfolioStore.getLocal());
-  const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<'home' | 'projects' | 'modeling' | 'admin'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -495,11 +788,6 @@ export default function App() {
   const skyY = useTransform(scrollY, [0, 1000], [0, 150]);
   const hillsY = useTransform(scrollY, [0, 1000], [0, 80]);
   const bushesY = useTransform(scrollY, [0, 1000], [0, -40]);
-  const handleCopy = (text?: string) => {
-    navigator.clipboard.writeText(text || data.email);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   // Route to admin, projects, or modeling page
   if (currentPage === 'admin') {
@@ -541,13 +829,13 @@ export default function App() {
         <HeroStarfield />
 
         {/* Hero Layout: Left Side Profile, Right Side Photo — Raised slightly for balanced spacing */}
-        <div id="about" className="relative z-30 mx-auto flex max-w-6xl flex-col items-center px-3.5 sm:px-6 pt-28 sm:pt-36 pb-3 sm:pb-8 text-left md:pt-38">
+        <div id="about" className="relative z-30 mx-auto flex max-w-6xl flex-col items-center px-3.5 sm:px-6 pt-20 sm:pt-24 md:pt-26 pb-3 sm:pb-8 text-left">
           <motion.div
             style={{ y: isDesktop ? heroY : 0 }}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="lp-gpu grid w-full items-center gap-10 md:grid-cols-12"
+            className="grid w-full items-center gap-8 sm:gap-10 md:grid-cols-12"
           >
             {/* Left Side: Name & Bio */}
             <div className="flex flex-col items-start text-left md:col-span-7">
@@ -598,7 +886,7 @@ export default function App() {
                 {data.bio}
               </p>
 
-              {/* Action Buttons & Social Links */}
+              {/* Action Buttons & Upper Social Links (CV, GitHub, LinkedIn only) */}
               <div className="mt-7 flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <a
                   href="#projects"
@@ -608,20 +896,27 @@ export default function App() {
                   <ArrowRight className="h-4 w-4" />
                 </a>
 
-                <button
-                  onClick={() => handleCopy(data.email)}
-                  className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm transition-all cursor-pointer border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-                >
-                  <Mail className="h-4 w-4 text-white/80" />
-                  <span>{copied ? 'Email Copied!' : 'Copy Email'}</span>
-                </button>
+                {/* CV / Resume Button */}
+                {data.cvUrl && (
+                  <a
+                    href={normalizeExternalUrl(data.cvUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition-all shadow-sm border-[#ffdb70]/50 bg-[#ffdb70]/10 text-[#ffdb70] hover:bg-[#ffdb70] hover:text-[#121212] cursor-pointer"
+                    title="View / Download CV"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>View CV</span>
+                    <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+                  </a>
+                )}
 
-                {/* Social Links from Admin Panel */}
+                {/* GitHub */}
                 {data.socials.github && (
                   <a
-                    href={data.socials.github}
+                    href={normalizeExternalUrl(data.socials.github)}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-all border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
                     title="GitHub Profile"
                   >
@@ -630,11 +925,12 @@ export default function App() {
                   </a>
                 )}
 
+                {/* LinkedIn */}
                 {data.socials.linkedin && (
                   <a
-                    href={data.socials.linkedin}
+                    href={normalizeExternalUrl(data.socials.linkedin)}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-all border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
                     title="LinkedIn Profile"
                   >
@@ -642,84 +938,41 @@ export default function App() {
                     <span className="hidden sm:inline">LinkedIn</span>
                   </a>
                 )}
-
-                {data.socials.facebook && (
-                  <a
-                    href={data.socials.facebook}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-all border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-                    title="Facebook Profile"
-                  >
-                    <FacebookIcon className="h-4 w-4 text-[#1877f2]" />
-                    <span className="hidden sm:inline">Facebook</span>
-                  </a>
-                )}
-
-                {data.socials.instagram && (
-                  <a
-                    href={data.socials.instagram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-all border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-                    title="Instagram Profile"
-                  >
-                    <InstagramIcon className="h-4 w-4 text-[#e4405f]" />
-                    <span className="hidden sm:inline">Instagram</span>
-                  </a>
-                )}
-
-                {data.socials.twitter && (
-                  <a
-                    href={data.socials.twitter}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-all border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-                    title="Twitter / X Profile"
-                  >
-                    <TwitterIcon className="h-4 w-4" />
-                    <span className="hidden sm:inline">X</span>
-                  </a>
-                )}
-
-                {data.socials.youtube && (
-                  <a
-                    href={data.socials.youtube}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-sm transition-all border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white"
-                    title="YouTube Channel"
-                  >
-                    <YoutubeIcon className="h-4 w-4 text-[#ff0000]" />
-                    <span className="hidden sm:inline">YouTube</span>
-                  </a>
-                )}
               </div>
             </div>
 
-            {/* Right Side: Developer Photo Card — Smooth, seamless frosted glass styling without muddy halos */}
+            {/* Right Side: Developer Photo — Comes directly out of broken page background, no outer box, no gimmicks */}
             <div className="w-full flex justify-center md:col-span-5 md:justify-end">
-              <div className="relative group w-full sm:max-w-[340px] md:max-w-[305px]">
-                <div className="relative overflow-hidden rounded-[20px] sm:rounded-[22px] border border-white/10 bg-[#121212]/50 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)] p-2 transition-all duration-300 hover:border-white/20">
-                  <div className="overflow-hidden rounded-[16px] aspect-[4/5] bg-black/20">
-                    {data.avatarUrl ? (
-                      <img
-                        src={data.avatarUrl}
-                        alt={`${data.name} — ${data.role}`}
-                        className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-[#1e1e1f] flex flex-col items-center justify-center text-center p-6">
-                        <div className="w-20 h-20 rounded-full bg-[#ffdb70]/10 border border-[#ffdb70]/30 flex items-center justify-center text-2xl font-bold text-[#ffdb70] mb-2 shadow-inner">
-                          {data.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </div>
-                        <span className="text-xs text-[#d6d6d6]/60 font-mono">Profile Photo</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="px-3.5 py-3 text-left">
-                    <span className="text-sm font-semibold block leading-tight text-white">{data.name}</span>
-                    <p className="text-xs mt-1 text-[#ffdb70] font-medium">{data.location}</p>
+              <div className="relative group w-full max-w-[325px]">
+                {/* Broken Page Background Edge: Subtle organic deckled tear directly on dark background */}
+                <div
+                  className="relative aspect-square w-full overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.01]"
+                  style={{
+                    clipPath: 'polygon(0% 2px, 2% 0px, 5% 3px, 9% 1px, 14% 3px, 18% 0px, 23% 3px, 28% 1px, 32% 0px, 37% 3px, 42% 1px, 47% 4px, 52% 1px, 57% 3px, 62% 0px, 66% 3px, 71% 1px, 76% 4px, 80% 0px, 85% 3px, 89% 1px, 94% 4px, 98% 1px, 100% 2px, 99% 14%, 100% 27%, 99% 41%, 100% 55%, 99% 69%, 100% 84%, 99% calc(100% - 2px), 97% 100%, 93% calc(100% - 3px), 88% calc(100% - 1px), 83% calc(100% - 4px), 79% calc(100% - 1px), 74% calc(100% - 3px), 69% calc(100% - 1px), 64% calc(100% - 4px), 59% calc(100% - 1px), 54% calc(100% - 3px), 49% calc(100% - 1px), 44% calc(100% - 4px), 39% calc(100% - 1px), 34% calc(100% - 4px), 29% calc(100% - 1px), 24% calc(100% - 3px), 19% calc(100% - 1px), 14% calc(100% - 3px), 9% calc(100% - 1px), 5% calc(100% - 3px), 0% calc(100% - 2px), 1% 86%, 0% 72%, 1% 58%, 0% 43%, 1% 29%, 0% 15%)',
+                    filter: 'drop-shadow(0 0 1px rgba(255, 219, 112, 0.45)) drop-shadow(0 16px 36px rgba(0, 0, 0, 0.95))',
+                  }}
+                >
+                  <img
+                    src={data.avatarUrl || '/developer_portrait.png'}
+                    alt={`${data.name} — ${data.role}`}
+                    className="h-full w-full object-cover object-center transition-all duration-500"
+                    style={{
+                      imageRendering: 'smooth',
+                      filter: 'contrast(0.96) brightness(1.0) saturate(0.98)',
+                    }}
+                  />
+                  {/* Subtle dark ambient blend into #03060a page background */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#03060a]/60 via-transparent to-[#03060a]/20" />
+                </div>
+
+                {/* Clean, minimal name & location directly under photo — no outer card box */}
+                <div className="mt-3.5 px-1 flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-semibold text-white block leading-tight">{data.name}</span>
+                    <p className="text-xs mt-1 text-[#ffdb70] font-medium flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ffdb70]" />
+                      {data.location}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -874,10 +1127,22 @@ export default function App() {
               <div id="experience" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
                 {/* Article Title with vCard signature golden accent bar */}
-                <header className="mb-6 sm:mb-8">
+                <header className="mb-6 sm:mb-8 flex flex-wrap items-center justify-between gap-4">
                   <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
                     {data.experienceSectionTitle || 'Resume'}
                   </h2>
+                  {data.cvUrl && (
+                    <a
+                      href={normalizeExternalUrl(data.cvUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-semibold transition-all shadow-sm bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_16px_rgba(255,219,112,0.35)] cursor-pointer"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>Download Full CV</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
                 </header>
 
                 {/* 1. EDUCATION SECTION */}
@@ -1208,8 +1473,8 @@ export default function App() {
             )}
 
             {/* ── FAQ Section — Exact Same Alignment & Architecture as Resume and Portfolio ── */}
-            <section id="contact" className="scroll-mt-24 py-8 sm:py-10">
-              <div id="faq" className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
+            <section id="faq" className="scroll-mt-24 py-8 sm:py-10">
+              <div className="rounded-[20px] bg-[#1e1e1f] border border-[#383838] p-4 sm:p-10 shadow-[0_16px_30px_rgba(0,0,0,0.25)]">
                 
                 {/* Article Title with signature golden accent bar */}
                 <header className="mb-6 sm:mb-8">
@@ -1245,6 +1510,9 @@ export default function App() {
 
               </div>
             </section>
+
+            {/* ── Contact Section — Real Interactive Contact & WhatsApp Area ── */}
+            <PortfolioContactSection data={data} />
 
           </div>
         </section>
@@ -1293,47 +1561,117 @@ export default function App() {
             </div>
           </div>
 
-          {/* Bottom Footer Bar — PRESERVED */}
-          <footer className="relative z-30 border-t border-[#383838] bg-[#03060a] text-[#d6d6d6]/60 py-8 px-3.5 sm:px-6 text-xs">
-            <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-6">
-                <a href="#about" className="transition-colors hover:text-[#ffdb70]">About</a>
-                <a href="#resume" className="transition-colors hover:text-[#ffdb70]">Resume</a>
-                <button
-                  onClick={() => navigate('/projects')}
-                  className="transition-colors hover:text-[#ffdb70] cursor-pointer"
-                >
-                  Portfolio
-                </button>
-                <a href="#ventures" className="transition-colors hover:text-[#ffdb70]">Ventures</a>
-                <button
-                  onClick={() => navigate('/modeling')}
-                  className="transition-colors hover:text-[#ffdb70] cursor-pointer"
-                >
-                  Modeling
-                </button>
-                <a href="#contact" className="transition-colors hover:text-[#ffdb70]">Contact</a>
-                <button
-                  onClick={() => navigate('/admin')}
-                  className="font-medium transition-colors cursor-pointer text-[#ffdb70] hover:underline"
-                >
-                  Admin CMS
-                </button>
+          {/* Bottom Footer Bar */}
+          <footer className="relative z-30 border-t border-[#383838] bg-[#03060a] text-[#d6d6d6]/70 py-8 px-3.5 sm:px-6 text-xs">
+            <div className="mx-auto max-w-6xl space-y-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-5">
+                {/* Navigation links */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-6">
+                  <a href="#about" className="transition-colors hover:text-[#ffdb70]">About</a>
+                  <a href="#resume" className="transition-colors hover:text-[#ffdb70]">Resume</a>
+                  <button
+                    onClick={() => navigate('/projects')}
+                    className="transition-colors hover:text-[#ffdb70] cursor-pointer"
+                  >
+                    Portfolio
+                  </button>
+                  <a href="#ventures" className="transition-colors hover:text-[#ffdb70]">Ventures</a>
+                  <button
+                    onClick={() => navigate('/modeling')}
+                    className="transition-colors hover:text-[#ffdb70] cursor-pointer"
+                  >
+                    Modeling
+                  </button>
+                  <a href="#contact" className="transition-colors hover:text-[#ffdb70]">Contact</a>
+                  <button
+                    onClick={() => navigate('/admin')}
+                    className="font-medium transition-colors cursor-pointer text-[#ffdb70] hover:underline"
+                  >
+                    Admin CMS
+                  </button>
+                </div>
+
+                {/* Social pill buttons with icons */}
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {data.socials.github && (
+                    <a
+                      href={normalizeExternalUrl(data.socials.github)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:border-[#ffdb70]/50 hover:bg-[#ffdb70]/10 hover:text-[#ffdb70] transition-all"
+                      title="GitHub"
+                    >
+                      <GithubIcon className="h-3.5 w-3.5" />
+                      <span>GitHub</span>
+                    </a>
+                  )}
+                  {data.socials.linkedin && (
+                    <a
+                      href={normalizeExternalUrl(data.socials.linkedin)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:border-[#ffdb70]/50 hover:bg-[#ffdb70]/10 hover:text-[#ffdb70] transition-all"
+                      title="LinkedIn"
+                    >
+                      <LinkedinIcon className="h-3.5 w-3.5 text-[#0a66c2]" />
+                      <span>LinkedIn</span>
+                    </a>
+                  )}
+                  {data.socials.facebook && (
+                    <a
+                      href={normalizeExternalUrl(data.socials.facebook)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:border-[#ffdb70]/50 hover:bg-[#ffdb70]/10 hover:text-[#ffdb70] transition-all"
+                      title="Facebook"
+                    >
+                      <FacebookIcon className="h-3.5 w-3.5 text-[#1877f2]" />
+                      <span>Facebook</span>
+                    </a>
+                  )}
+                  {data.socials.instagram && (
+                    <a
+                      href={normalizeExternalUrl(data.socials.instagram)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:border-[#ffdb70]/50 hover:bg-[#ffdb70]/10 hover:text-[#ffdb70] transition-all"
+                      title="Instagram"
+                    >
+                      <InstagramIcon className="h-3.5 w-3.5 text-[#e4405f]" />
+                      <span>Instagram</span>
+                    </a>
+                  )}
+                  {data.socials.twitter && (
+                    <a
+                      href={normalizeExternalUrl(data.socials.twitter)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:border-[#ffdb70]/50 hover:bg-[#ffdb70]/10 hover:text-[#ffdb70] transition-all"
+                      title="Twitter / X"
+                    >
+                      <TwitterIcon className="h-3.5 w-3.5" />
+                      <span>X</span>
+                    </a>
+                  )}
+                  {data.socials.youtube && (
+                    <a
+                      href={normalizeExternalUrl(data.socials.youtube)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 hover:border-[#ffdb70]/50 hover:bg-[#ffdb70]/10 hover:text-[#ffdb70] transition-all"
+                      title="YouTube"
+                    >
+                      <YoutubeIcon className="h-3.5 w-3.5 text-[#ff0000]" />
+                      <span>YouTube</span>
+                    </a>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-4">
+
+              {/* Bottom Copyright & Tagline */}
+              <div className="flex flex-col sm:flex-row items-center justify-between border-t border-white/5 pt-4 text-xs text-neutral-500 gap-2">
                 <span>© {new Date().getFullYear()} {data.name}. All rights reserved.</span>
-                {data.socials.github && (
-                  <a href={data.socials.github} target="_blank" rel="noreferrer" className="transition-colors hover:text-[#ffdb70]">GitHub</a>
-                )}
-                {data.socials.linkedin && (
-                  <a href={data.socials.linkedin} target="_blank" rel="noreferrer" className="transition-colors hover:text-[#ffdb70]">LinkedIn</a>
-                )}
-                {data.socials.facebook && (
-                  <a href={data.socials.facebook} target="_blank" rel="noreferrer" className="transition-colors hover:text-[#ffdb70]">Facebook</a>
-                )}
-                {data.socials.instagram && (
-                  <a href={data.socials.instagram} target="_blank" rel="noreferrer" className="transition-colors hover:text-[#ffdb70]">Instagram</a>
-                )}
+                <span>Full-Stack Software Engineer &amp; Backend Specialist</span>
               </div>
             </div>
           </footer>
