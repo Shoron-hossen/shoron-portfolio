@@ -23,6 +23,8 @@ import {
   Globe,
   Building2,
   Camera,
+  BookOpen,
+  Code2,
 } from 'lucide-react';
 import { PortfolioStore, DEFAULT_PORTFOLIO_DATA, type PortfolioData } from './portfolioStore';
 import { CloudflareR2, type R2Config } from './cloudflareR2';
@@ -239,7 +241,7 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
     { key: 'profile', label: 'Profile', icon: User },
     { key: 'hero', label: 'Hero Section', icon: Eye },
     { key: 'skills', label: 'Skills', icon: Cpu },
-    { key: 'experience', label: 'Experience', icon: Briefcase },
+    { key: 'experience', label: 'Resume & Education', icon: BookOpen },
     { key: 'ventures', label: 'Ventures', icon: Building2 },
     { key: 'modeling', label: 'Modeling', icon: Camera },
     { key: 'faq', label: 'FAQ', icon: HelpCircle },
@@ -601,70 +603,339 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
         )}
 
         {/* ══════════════════════════════════════════
-            TAB: Experience
+            TAB: Resume & Education
            ══════════════════════════════════════════ */}
         {activeTab === 'experience' && (
-          <div className={`max-w-3xl ${cardClass} space-y-5`}>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
-              <Briefcase className="w-4 h-4 text-forest-bright" /> Experience Section
-            </h3>
+          <div className={`max-w-4xl ${cardClass} space-y-8`}>
+            
+            {/* Header info */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-[#ffdb70]" /> Resume & Experience CMS
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Manage your Education credentials, Professional Work Experience, and Skill Progress percentages displayed on the homepage Resume section.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[#ffdb70]">
+                  {(data.educations || []).length} Edu · {(data.experiences || []).length} Exp
+                </span>
+              </div>
+            </div>
 
-            <InputField label="Section Title" value={data.experienceSectionTitle} onChange={(v) => setData({ ...data, experienceSectionTitle: v })} />
+            {/* Section Heading Title */}
+            <div>
+              <InputField
+                label="Resume Section Title (Homepage)"
+                value={data.experienceSectionTitle || 'Resume'}
+                onChange={(v) => setData({ ...data, experienceSectionTitle: v })}
+                placeholder="Resume"
+              />
+            </div>
 
-            {data.experiences.map((exp, idx) => (
-              <div key={idx} className="bg-black/30 border border-white/5 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono text-forest-bright">Experience {idx + 1}</span>
-                  <button
-                    onClick={() => {
-                      const updated = data.experiences.filter((_, i) => i !== idx);
+            {/* ──────────────────────────────────────────
+                1. EDUCATION SECTION
+               ────────────────────────────────────────── */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-[#ffdb70]" /> 1. Education History
+                </h4>
+                <span className="text-xs font-mono text-[#ffdb70]">
+                  {(data.educations && data.educations.length > 0 ? data.educations : DEFAULT_PORTFOLIO_DATA.educations || []).length} Degrees / Certificates
+                </span>
+              </div>
+
+              {(data.educations && data.educations.length > 0 ? data.educations : DEFAULT_PORTFOLIO_DATA.educations || []).map((edu, idx) => (
+                <div key={idx} className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-[#ffdb70] font-bold">Education #{idx + 1}</span>
+                      <span className="text-xs text-slate-300 font-medium truncate max-w-xs">{edu.title || 'Untitled Degree'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = data.educations && data.educations.length > 0 ? data.educations : (DEFAULT_PORTFOLIO_DATA.educations || []);
+                        const updated = current.filter((_, i) => i !== idx);
+                        setData({ ...data, educations: updated });
+                      }}
+                      className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                      title="Delete education entry"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <InputField
+                      label="Degree / Certificate Title"
+                      value={edu.title}
+                      placeholder="e.g. B.Sc. in Computer Science and Engineering"
+                      onChange={(v) => {
+                        const current = data.educations && data.educations.length > 0 ? [...data.educations] : [...(DEFAULT_PORTFOLIO_DATA.educations || [])];
+                        current[idx] = { ...edu, title: v };
+                        setData({ ...data, educations: current });
+                      }}
+                    />
+                    <InputField
+                      label="Institution / University"
+                      value={edu.institution}
+                      placeholder="e.g. Green University of Bangladesh, Dhaka"
+                      onChange={(v) => {
+                        const current = data.educations && data.educations.length > 0 ? [...data.educations] : [...(DEFAULT_PORTFOLIO_DATA.educations || [])];
+                        current[idx] = { ...edu, institution: v };
+                        setData({ ...data, educations: current });
+                      }}
+                    />
+                  </div>
+
+                  <InputField
+                    label="Academic Period / Years"
+                    value={edu.period}
+                    placeholder="e.g. 2022 — Present"
+                    onChange={(v) => {
+                      const current = data.educations && data.educations.length > 0 ? [...data.educations] : [...(DEFAULT_PORTFOLIO_DATA.educations || [])];
+                      current[idx] = { ...edu, period: v };
+                      setData({ ...data, educations: current });
+                    }}
+                  />
+
+                  <InputField
+                    label="Description & Highlights"
+                    value={edu.description}
+                    placeholder="Courses, achievements, and academic focuses..."
+                    textarea
+                    rows={2}
+                    onChange={(v) => {
+                      const current = data.educations && data.educations.length > 0 ? [...data.educations] : [...(DEFAULT_PORTFOLIO_DATA.educations || [])];
+                      current[idx] = { ...edu, description: v };
+                      setData({ ...data, educations: current });
+                    }}
+                  />
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  const current = data.educations && data.educations.length > 0 ? [...data.educations] : [...(DEFAULT_PORTFOLIO_DATA.educations || [])];
+                  current.push({
+                    title: '',
+                    institution: '',
+                    period: '',
+                    description: '',
+                  });
+                  setData({ ...data, educations: current });
+                }}
+                className="w-full py-2.5 text-xs font-semibold rounded-xl border border-dashed border-white/20 text-white/60 hover:text-white hover:border-[#ffdb70] transition-all flex items-center justify-center gap-2 cursor-pointer hover:bg-white/5"
+              >
+                <Plus className="w-4 h-4 text-[#ffdb70]" /> Add Education Entry
+              </button>
+            </div>
+
+            {/* ──────────────────────────────────────────
+                2. WORK EXPERIENCE SECTION
+               ────────────────────────────────────────── */}
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-[#ffdb70]" /> 2. Professional Work Experience
+                </h4>
+                <span className="text-xs font-mono text-[#ffdb70]">
+                  {(data.experiences || []).length} Roles
+                </span>
+              </div>
+
+              {(data.experiences || []).map((exp, idx) => (
+                <div key={idx} className="bg-black/40 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-[#ffdb70] font-bold">Experience #{idx + 1}</span>
+                      <span className="text-xs text-slate-300 font-medium truncate max-w-xs">{exp.title || 'Untitled Role'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = data.experiences.filter((_, i) => i !== idx);
+                        setData({ ...data, experiences: updated });
+                      }}
+                      className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                      title="Delete experience entry"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <InputField
+                      label="Job Title / Role"
+                      value={exp.title}
+                      placeholder="e.g. Java & Backend Developer"
+                      onChange={(v) => {
+                        const updated = [...data.experiences];
+                        updated[idx] = { ...exp, title: v };
+                        setData({ ...data, experiences: updated });
+                      }}
+                    />
+                    <InputField
+                      label="Company / Client"
+                      value={exp.company}
+                      placeholder="e.g. Ingoude Company / Freelance"
+                      onChange={(v) => {
+                        const updated = [...data.experiences];
+                        updated[idx] = { ...exp, company: v };
+                        setData({ ...data, experiences: updated });
+                      }}
+                    />
+                  </div>
+
+                  <InputField
+                    label="Employment Period"
+                    value={exp.period}
+                    placeholder="e.g. 2023 — Present"
+                    onChange={(v) => {
+                      const updated = [...data.experiences];
+                      updated[idx] = { ...exp, period: v };
                       setData({ ...data, experiences: updated });
                     }}
-                    className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  />
+
+                  <InputField
+                    label="Job Responsibilities & Impact"
+                    value={exp.description}
+                    placeholder="Technologies implemented, systems scaled, and achievements..."
+                    textarea
+                    rows={2}
+                    onChange={(v) => {
+                      const updated = [...data.experiences];
+                      updated[idx] = { ...exp, description: v };
+                      setData({ ...data, experiences: updated });
+                    }}
+                  />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <InputField label="Job Title" value={exp.title} onChange={(v) => {
-                    const updated = [...data.experiences];
-                    updated[idx] = { ...exp, title: v };
-                    setData({ ...data, experiences: updated });
-                  }} />
-                  <InputField label="Company" value={exp.company} onChange={(v) => {
-                    const updated = [...data.experiences];
-                    updated[idx] = { ...exp, company: v };
-                    setData({ ...data, experiences: updated });
-                  }} />
+              ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setData({
+                    ...data,
+                    experiences: [...data.experiences, { title: '', company: '', period: '', description: '' }]
+                  });
+                }}
+                className="w-full py-2.5 text-xs font-semibold rounded-xl border border-dashed border-white/20 text-white/60 hover:text-white hover:border-[#ffdb70] transition-all flex items-center justify-center gap-2 cursor-pointer hover:bg-white/5"
+              >
+                <Plus className="w-4 h-4 text-[#ffdb70]" /> Add Work Experience Entry
+              </button>
+            </div>
+
+            {/* ──────────────────────────────────────────
+                3. MY SKILLS PROGRESS PERCENTAGES
+               ────────────────────────────────────────── */}
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Code2 className="w-4 h-4 text-[#ffdb70]" /> 3. My Skills (Percentage Progress Bars)
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Controls the animated percentage progress bars displayed in the Resume section.
+                  </p>
                 </div>
-                <InputField label="Period" value={exp.period} onChange={(v) => {
-                  const updated = [...data.experiences];
-                  updated[idx] = { ...exp, period: v };
-                  setData({ ...data, experiences: updated });
-                }} placeholder="e.g. 2023 – Present" />
-                <InputField label="Description" value={exp.description} onChange={(v) => {
-                  const updated = [...data.experiences];
-                  updated[idx] = { ...exp, description: v };
-                  setData({ ...data, experiences: updated });
-                }} textarea rows={2} />
+                <span className="text-xs font-mono text-[#ffdb70]">
+                  {(data.skillPercentages && data.skillPercentages.length > 0 ? data.skillPercentages : DEFAULT_PORTFOLIO_DATA.skillPercentages || []).length} Skills
+                </span>
               </div>
-            ))}
 
-            <button
-              onClick={() => {
-                setData({
-                  ...data,
-                  experiences: [...data.experiences, { title: '', company: '', period: '', description: '' }]
-                });
-              }}
-              className="w-full py-2.5 text-xs font-semibold rounded-xl border border-dashed border-white/20 text-white/60 hover:text-white hover:border-forest-bright/50 transition-all flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Add Experience
-            </button>
+              <div className="space-y-3">
+                {(data.skillPercentages && data.skillPercentages.length > 0 ? data.skillPercentages : DEFAULT_PORTFOLIO_DATA.skillPercentages || []).map((skill, idx) => (
+                  <div key={idx} className="bg-black/40 border border-white/10 rounded-xl p-3.5 sm:p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <label className="block text-[11px] font-medium text-slate-300 mb-1">Skill Name & Domain</label>
+                        <input
+                          type="text"
+                          value={skill.name}
+                          placeholder="e.g. Flutter & Dart (Mobile App Development)"
+                          onChange={(e) => {
+                            const current = data.skillPercentages && data.skillPercentages.length > 0 ? [...data.skillPercentages] : [...(DEFAULT_PORTFOLIO_DATA.skillPercentages || [])];
+                            current[idx] = { ...skill, name: e.target.value };
+                            setData({ ...data, skillPercentages: current });
+                          }}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="w-24 sm:w-28 shrink-0">
+                        <label className="block text-[11px] font-medium text-slate-300 mb-1">Percentage (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={skill.percentage}
+                          onChange={(e) => {
+                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                            const current = data.skillPercentages && data.skillPercentages.length > 0 ? [...data.skillPercentages] : [...(DEFAULT_PORTFOLIO_DATA.skillPercentages || [])];
+                            current[idx] = { ...skill, percentage: val };
+                            setData({ ...data, skillPercentages: current });
+                          }}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div className="pt-5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = data.skillPercentages && data.skillPercentages.length > 0 ? data.skillPercentages : (DEFAULT_PORTFOLIO_DATA.skillPercentages || []);
+                            const updated = current.filter((_, i) => i !== idx);
+                            setData({ ...data, skillPercentages: updated });
+                          }}
+                          className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                          title="Delete skill bar"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
 
-            <button onClick={handleSaveAll} disabled={isSaving} className="w-full py-3 bg-forest-bright text-black font-bold text-sm rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center justify-center gap-2 mt-4 cursor-pointer">
-              <Save className="w-4 h-4" /> {isSaving ? 'Saving...' : 'Save Experience'}
-            </button>
+                    {/* Live Preview Bar */}
+                    <div className="w-full h-1.5 rounded-full bg-[#383838] overflow-hidden mt-2">
+                      <div
+                        style={{ width: `${Math.min(100, Math.max(0, skill.percentage || 0))}%` }}
+                        className="h-full rounded-full bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] transition-all duration-300"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const current = data.skillPercentages && data.skillPercentages.length > 0 ? [...data.skillPercentages] : [...(DEFAULT_PORTFOLIO_DATA.skillPercentages || [])];
+                  current.push({ name: '', percentage: 85 });
+                  setData({ ...data, skillPercentages: current });
+                }}
+                className="w-full py-2.5 text-xs font-semibold rounded-xl border border-dashed border-white/20 text-white/60 hover:text-white hover:border-[#ffdb70] transition-all flex items-center justify-center gap-2 cursor-pointer hover:bg-white/5"
+              >
+                <Plus className="w-4 h-4 text-[#ffdb70]" /> Add Skill Progress Bar
+              </button>
+            </div>
+
+            {/* Save All Resume Content */}
+            <div className="pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={handleSaveAll}
+                disabled={isSaving}
+                className="w-full py-3.5 bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] font-bold text-sm rounded-xl hover:brightness-105 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+              >
+                <Save className="w-4 h-4" /> {isSaving ? 'Saving to Cloudflare D1...' : 'Save All Resume & Experience Changes'}
+              </button>
+            </div>
+
           </div>
         )}
 

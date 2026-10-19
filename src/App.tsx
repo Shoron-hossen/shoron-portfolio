@@ -233,8 +233,8 @@ function PortfolioHeader({
             onClick={(e) => { e.preventDefault(); navigate('/'); }}
             className="group flex flex-shrink-0 items-center gap-2.5 opacity-90 transition-opacity duration-200 hover:opacity-100"
           >
-            <div className="h-8 w-8 rounded-lg bg-[#ffdb70] text-[#121212] flex items-center justify-center font-bold text-xs shadow-xs">
-              {name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#ffdb70] to-[#ceb15a] text-[#121212] flex items-center justify-center font-black text-sm shadow-[0_2px_10px_rgba(255,219,112,0.35)] transition-transform duration-200 group-hover:scale-105">
+              S
             </div>
             <span className="lp-serif text-lg tracking-tight font-medium text-[#fafafa]">
               {name} <span className="text-xs font-mono font-normal text-[#ffdb70]">.dev</span>
@@ -727,8 +727,8 @@ export default function App() {
           </motion.div>
         </div>
 
-        {/* Multi-Layer Landscape Parallax — Expanded height on mobile so all 3 cards stack without cut-off */}
-        <div className="relative mt-2 sm:mt-8 min-h-[136vh] sm:min-h-0 sm:h-[108vh] w-full md:mt-12 md:h-[118vh]">
+        {/* Multi-Layer Landscape Parallax — Seamless on mobile, 4-layer parallax on desktop */}
+        <div className="relative mt-2 sm:mt-8 w-full overflow-hidden sm:min-h-0 sm:h-[108vh] md:mt-12 md:h-[118vh] pb-0 sm:pb-0">
           
           {/* Layer 0: Sky Background */}
           <motion.img
@@ -736,7 +736,7 @@ export default function App() {
             src="/sky-bg.webp"
             alt=""
             aria-hidden="true"
-            className="lp-gpu pointer-events-none absolute inset-x-0 bottom-[32%] z-0 w-full select-none object-cover brightness-[0.7] saturate-[0.8]"
+            className="lp-gpu pointer-events-none absolute inset-0 sm:inset-x-0 sm:bottom-[32%] z-0 w-full h-full sm:h-auto select-none object-cover brightness-[0.7] saturate-[0.8]"
           />
 
           {/* Layer 1: Hills Background */}
@@ -745,12 +745,12 @@ export default function App() {
             src="/hills-bg.webp"
             alt=""
             aria-hidden="true"
-            className="lp-gpu pointer-events-none absolute inset-x-0 bottom-[21%] z-[1] w-full select-none object-cover brightness-[1.15] contrast-[1.05]"
+            className="lp-gpu pointer-events-none absolute inset-x-0 bottom-10 sm:bottom-[21%] z-[1] w-full select-none object-cover brightness-[1.15] contrast-[1.05]"
           />
 
           {/* Layer 2: Main Featured Profile Card */}
-          <div className="lp-gpu absolute inset-x-0 top-2 sm:top-[11%] z-10 mx-auto w-full max-w-4xl px-3.5 sm:px-6">
-            <div className="relative w-full overflow-hidden rounded-t-[20px] border border-b-0 border-[#383838] bg-[#1e1e1f] text-[#fafafa] shadow-[0_16px_30px_rgba(0,0,0,0.25)] px-4 pt-6 sm:pt-9 pb-36 sm:px-9 sm:pb-[42vh] md:pb-[46vh]">
+          <div className="lp-gpu relative z-10 mx-auto w-full max-w-4xl px-3.5 sm:px-6 sm:absolute sm:inset-x-0 sm:top-[11%]">
+            <div className="relative w-full overflow-hidden rounded-t-[20px] border border-b-0 border-[#383838] bg-[#1e1e1f] text-[#fafafa] shadow-[0_16px_30px_rgba(0,0,0,0.25)] px-4 pt-6 pb-28 sm:px-9 sm:pt-9 sm:pb-[42vh] md:pb-[46vh]">
               
               {/* Badge & Quick Stats — DYNAMIC */}
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#383838] pb-5">
@@ -766,7 +766,7 @@ export default function App() {
               </div>
 
               {/* Hero Cards — DYNAMIC */}
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-3 relative z-10">
                 {data.heroCards.map((card, idx) => {
                   const IconComp = iconMap[card.icon] || Code2;
                   return (
@@ -781,10 +781,13 @@ export default function App() {
                 })}
               </div>
 
+              {/* Card Internal Bottom Vignette — Dissolves the bottom of the card box seamlessly into obsidian #03060a */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 sm:h-48 bg-gradient-to-t from-[#03060a] via-[#03060a]/80 to-transparent z-20" />
+
             </div>
           </div>
 
-          {/* Layer 3: Foreground Bushes — PRESERVED EXACTLY */}
+          {/* Layer 3: Foreground Bushes — Overlaps bottom of card with atmospheric vignette */}
           <motion.div
             style={{ y: isDesktop ? bushesY : 0 }}
             className="lp-gpu pointer-events-none absolute inset-x-0 bottom-0 z-20"
@@ -793,13 +796,13 @@ export default function App() {
               src="/bushes-fg.webp"
               alt=""
               aria-hidden="true"
-              className="block w-full origin-bottom scale-[1.6] select-none object-cover brightness-[0.7] saturate-[0.85] md:scale-[1.35]"
+              className="block w-full origin-bottom scale-[1.35] select-none object-cover brightness-[0.7] saturate-[0.85] md:scale-[1.35]"
             />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-[#03060a]/70 to-[#03060a]" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 sm:h-52 bg-gradient-to-t from-[#03060a] via-[#03060a]/85 to-transparent" />
           </motion.div>
 
           {/* Section Base Blend — Guarantees 0px seam or bar between Hero and Content */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent via-[#03060a]/80 to-[#03060a] z-30" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 sm:h-36 bg-gradient-to-t from-[#03060a] to-transparent z-30" />
         </div>
       </section>
 
@@ -873,7 +876,7 @@ export default function App() {
                 {/* Article Title with vCard signature golden accent bar */}
                 <header className="mb-6 sm:mb-8">
                   <h2 className="relative pb-3 text-2xl sm:text-3xl font-bold tracking-tight text-[#fafafa] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-10 after:h-1.5 after:bg-gradient-to-r after:from-[#ffdb70] after:to-[#ceb15a] after:rounded-full">
-                    Resume
+                    {data.experienceSectionTitle || 'Resume'}
                   </h2>
                 </header>
 
