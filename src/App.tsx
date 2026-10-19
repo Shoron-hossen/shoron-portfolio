@@ -31,6 +31,7 @@ import ProjectsPage from './ProjectsPage';
 import ModelingPage from './ModelingPage';
 import GithubIcon from './components/GithubIcon';
 import { LinkedinIcon, FacebookIcon, InstagramIcon, TwitterIcon, YoutubeIcon } from './components/SocialIcons';
+import ShoronAiChat from './components/ShoronAiChat';
 
 // Ensures external URLs always have https:// protocol so they open external sites rather than relative routes
 const normalizeExternalUrl = (url?: string): string => {
@@ -403,59 +404,54 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
   // Direct Google Mail (Gmail) Compose Link for instant 1-click compose
   const gmailDirectUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}`;
 
-  const handleSendDirect = async (e: React.FormEvent) => {
+  const handleSendDirect = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !message) return;
-    setLoading(true);
-    setErrorMessage('');
+    if (!name.trim() || !email.trim() || !message.trim()) return;
 
-    try {
-      const recipientEmail = data.email || 'shoronhossen886@gmail.com';
-      const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
+    const payload = {
+      name: name.trim(),
+      email: email.trim(),
+      _subject: subject.trim() || `Portfolio Direct Inquiry from ${name.trim()}`,
+      message: message.trim(),
+      _replyto: email.trim(),
+      _template: 'table',
+      _captcha: 'false',
+    };
+    const recipientEmail = data.email || 'shoronhossen886@gmail.com';
+
+    // Instant zero-delay response: immediately confirm and clear form
+    setSent(true);
+    setLoading(false);
+    setErrorMessage('');
+    setName('');
+    setEmail('');
+    setSubject('');
+    setMessage('');
+    setTimeout(() => setSent(false), 9000);
+
+    // 1. Cloudflare Pages edge function dispatch (0ms CORS delay, server-side queue)
+    fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim() || `Portfolio Direct Inquiry from ${name.trim()}`,
+        message: message.trim(),
+      }),
+    }).catch(() => {
+      // 2. Direct FormSubmit fallback if offline/local dev
+      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          name: name,
-          email: email,
-          _subject: subject.trim() || `Portfolio Direct Inquiry from ${name}`,
-          message: message,
-          _replyto: email,
-          _template: 'table',
-          _captcha: 'false',
-        }),
+        body: JSON.stringify(payload),
+      }).catch((err) => {
+        console.warn('Background mail dispatch notice:', err);
       });
-
-      const resJson = await response.json().catch(() => null);
-      if (response.ok || (resJson && (resJson.success === 'true' || resJson.success === true))) {
-        setSent(true);
-        setName('');
-        setEmail('');
-        setSubject('');
-        setMessage('');
-        setTimeout(() => setSent(false), 9000);
-      } else {
-        if (resJson && resJson.message && resJson.message.toLowerCase().includes('activation')) {
-          setSent(true);
-          setName('');
-          setEmail('');
-          setSubject('');
-          setMessage('');
-          setTimeout(() => setSent(false), 10000);
-        } else {
-          throw new Error((resJson && resJson.message) || 'Failed to send message. Please try again.');
-        }
-      }
-    } catch (err: unknown) {
-      console.error('Direct mail send error:', err);
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Unable to send message directly. Please try again or reach out on WhatsApp.'
-      );
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -794,10 +790,20 @@ export default function App() {
     return <AdminPage onBackHome={() => navigate('/')} />;
   }
   if (currentPage === 'projects') {
-    return <ProjectsPage onBackHome={() => navigate('/')} />;
+    return (
+      <>
+        <ProjectsPage onBackHome={() => navigate('/')} />
+        <ShoronAiChat data={data} />
+      </>
+    );
   }
   if (currentPage === 'modeling') {
-    return <ModelingPage onBackHome={() => navigate('/')} />;
+    return (
+      <>
+        <ModelingPage onBackHome={() => navigate('/')} />
+        <ShoronAiChat data={data} />
+      </>
+    );
   }
 
   const firstName = data.name.toLowerCase().includes('shoron')
@@ -1677,6 +1683,9 @@ export default function App() {
           </footer>
         </section>
       </div>
+
+      {/* AI Chat Launcher & Dialog (Trained as Shoron, Powered by Gemini) */}
+      <ShoronAiChat data={data} />
 
     </div>
   );

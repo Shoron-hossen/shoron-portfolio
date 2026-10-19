@@ -141,6 +141,10 @@ export interface PortfolioData {
   // Modeling & Fashion (Showcased on dedicated Modeling Page)
   modelingOrganizations?: ModelingOrganization[];
   modelingPhotos?: ModelingPhoto[];
+
+  // AI Digital Twin (Google Gemini API)
+  geminiApiKey?: string;
+  aiSystemPrompt?: string;
 }
 
 // ─── Default Data ───────────────────────────────────────────────────
@@ -341,7 +345,10 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
 
   ventures: [],
   modelingOrganizations: [],
-  modelingPhotos: []
+  modelingPhotos: [],
+
+  geminiApiKey: "",
+  aiSystemPrompt: ""
 };
 
 // ─── Cloudflare D1 Persistence Layer ────────────────────────────────

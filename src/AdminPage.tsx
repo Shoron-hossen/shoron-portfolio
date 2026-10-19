@@ -25,6 +25,7 @@ import {
   Camera,
   BookOpen,
   Code2,
+  Sparkles,
 } from 'lucide-react';
 import { PortfolioStore, DEFAULT_PORTFOLIO_DATA, type PortfolioData } from './portfolioStore';
 import { CloudflareR2, type R2Config } from './cloudflareR2';
@@ -1614,6 +1615,44 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
            ══════════════════════════════════════════ */}
         {activeTab === 'settings' && (
           <div className="max-w-3xl space-y-6">
+            {/* AI Digital Twin — Google Gemini Configuration */}
+            <div className={`${cardClass} space-y-5 border-[#ffdb70]/30`}>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-[#ffdb70]" /> AI Digital Twin (Google Gemini API)
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Empower your interactive website chatbot to reply authentically as you. The AI is trained on your full stack, projects, experiences, educations, and contact details.
+              </p>
+
+              <InputField
+                label="Google Gemini API Key"
+                value={data.geminiApiKey}
+                onChange={(v) => setData({ ...data, geminiApiKey: v })}
+                type="password"
+                placeholder="AIzaSy..."
+              />
+
+              <InputField
+                label="Custom Persona Instructions / Guidelines (Optional)"
+                value={data.aiSystemPrompt}
+                onChange={(v) => setData({ ...data, aiSystemPrompt: v })}
+                textarea
+                rows={3}
+                placeholder="e.g. Always emphasize my backend engineering & Flutter expertise, and encourage recruiters to WhatsApp me."
+              />
+
+              <div className={`rounded-xl p-3 text-xs ${data.geminiApiKey ? 'bg-forest-bright/10 border border-forest-bright/30 text-forest-bright' : 'bg-amber-500/10 border border-amber-500/30 text-amber-400'}`}>
+                {data.geminiApiKey ? '✓ Gemini API Key is configured and ready for live visitor chat!' : '⚠ Gemini API Key not set yet. Enter your key here or directly in the chat window to enable AI.'}
+              </div>
+
+              <button
+                onClick={handleSaveAll}
+                className="w-full py-3 bg-[#ffdb70] text-[#121212] font-bold text-sm rounded-xl hover:bg-[#ffdb70]/90 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <Save className="w-4 h-4" /> Save AI Configuration
+              </button>
+            </div>
+
             {/* Cloudflare R2 Configuration */}
             <div className={`${cardClass} space-y-5`}>
               <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
