@@ -19,94 +19,196 @@ interface Message {
 
 export function buildShoronPersonaPrompt(data: PortfolioData): string {
   const skillList = (data.skillCategories || [])
-    .map((c) => `${c.category}: ${c.skills.join(', ')}`)
-    .join('\n');
+    .map((c) => `${c.category}: ${c.skills.slice(0, 6).join(', ')}`)
+    .join(' | ');
 
   const projectList = (data.projects || [])
-    .map(
-      (p) =>
-        `- ${p.title} (${p.category}): ${p.subtitle}. Tech: ${p.technologies.join(', ')}. Details: ${p.description}`
-    )
-    .join('\n');
+    .slice(0, 4)
+    .map((p) => `${p.title} (${p.category}): ${p.subtitle}`)
+    .join('; ');
 
-  const expList = (data.experiences || [])
-    .map((e) => `- ${e.title} at ${e.company} (${e.period}): ${e.description}`)
-    .join('\n');
-
-  const eduList = (data.educations || [])
-    .map((ed) => `- ${ed.title} at ${ed.institution} (${ed.period}): ${ed.description}`)
-    .join('\n');
-
-  const ventureList = (data.ventures || [])
-    .map((v) => `- ${v.name} (${v.role}): ${v.description}`)
-    .join('\n');
-
-  return `You are MD. SHORON HOSSEN's official personal assistant on his personal software engineering portfolio website.
-Speak in the FIRST PERSON ("I", "my", "me") as Shoron himself. 
-
-YOUR PROFILE & IDENTITY:
-- Name: ${data.name}
-- Current Role: ${data.role}
-- Sub-role & Specialization: ${data.subRole}
-- Location: ${data.location} (Dhaka, Bangladesh)
-- Direct Email: ${data.email}
-- Direct Phone / WhatsApp: ${data.phone || '01888668396'}
-- Bio: ${data.bio}
-
-CORE TECHNICAL SKILLS & STACK:
-${skillList}
-
-FEATURED PROJECTS:
-${projectList}
-
-WORK EXPERIENCE:
-${expList}
-
-EDUCATION:
-${eduList}
-
-VENTURES & CREATIVE WORK:
-${ventureList || 'Entrepreneurship, technology solutions, and commercial/editorial modeling.'}
-
-COMMUNICATION RULES & TONE:
-1. Speak as Shoron with a confident, modern, respectful, and articulate software engineering tone.
-2. If asked about hiring, full-time roles, freelance, contracts, or rates, be welcoming and encourage them to connect with me via WhatsApp (${data.phone || '01888668396'}) or Email (${data.email}).
-3. Answer technical questions accurately based on my real stack: Flutter & Dart for mobile, Java (Spring Boot) and Python (FastAPI) for backend systems, Node.js, TypeScript, React, PostgreSQL/MySQL, MongoDB, and Cloudflare services.
-4. Keep answers concise, direct, and conversational. Use bullet points or short code snippets when helpful. Avoid robotic disclaimers.
-5. If asked about things completely unrelated to my career, software engineering, modeling, or collaboration, politely pivot back to how we can build great software together.
-${data.aiSystemPrompt ? `\nADDITIONAL INSTRUCTIONS FROM SHORON:\n${data.aiSystemPrompt}` : ''}
-`;
+  return `You are MD. SHORON HOSSEN (Full-Stack Developer, Mobile & Web, Backend Architecture, Dhaka, Bangladesh).
+Speak in the FIRST PERSON ("I", "my") as Shoron.
+Email: ${data.email} | Phone/WhatsApp: ${data.phone || '01888668396'}.
+Skills: ${skillList}.
+Projects: ${projectList}.
+Bio: ${data.bio}
+Rules:
+1. Speak warmly, professionally, and concisely (2-4 sentences max per reply).
+2. If asked to hire, contract, or collaborate, invite them to WhatsApp (${data.phone || '01888668396'}) or email (${data.email}).
+${data.aiSystemPrompt ? `\nNote: ${data.aiSystemPrompt}` : ''}`;
 }
 
-// Active working model cache for ultra-fast instant sub-second responses
-let cachedModel = '';
+// Ultra-fast working model cache
+let cachedEndpoint = '';
 try {
-  cachedModel = localStorage.getItem('shoron_active_gemini_model') || '';
+  cachedEndpoint = localStorage.getItem('shoron_active_gemini_endpoint') || '';
 } catch {}
 
-// Ultra-fast Gemini dispatcher: checks cached model directly (0-1s latency)
+interface FastModelCandidate {
+  apiVersion: 'v1' | 'v1beta';
+  model: string;
+}
+
+// Only ultra-fast flash models — NO slow legacy gemini-pro (which takes 20s)
+const FAST_CANDIDATES: FastModelCandidate[] = [
+  { apiVersion: 'v1', model: 'gemini-1.5-flash' },
+  { apiVersion: 'v1beta', model: 'gemini-1.5-flash-8b' },
+  { apiVersion: 'v1beta', model: 'gemini-1.5-flash' },
+  { apiVersion: 'v1beta', model: 'gemini-2.0-flash' },
+  { apiVersion: 'v1beta', model: 'gemini-2.0-flash-exp' },
+];
+
+async function executeSingleModelWithTimeout(
+  candidate: FastModelCandidate,
+  apiKey: string,
+  payload: any,
+  timeoutMs = 2500
+): Promise<{ text: string; endpointKey: string }> {
+  const endpointKey = `${candidate.apiVersion}/${candidate.model}`;
+  const url = `https://generativelanguage.googleapis.com/${candidate.apiVersion}/models/${candidate.model}:generateContent?key=${encodeURIComponent(
+    apiKey
+  )}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const resJson = await res.json();
+    const text = resJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      throw new Error('Empty text');
+    }
+    return { text, endpointKey };
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+// Instant intelligent persona engine for 0-latency responses (<50ms)
+export function generateInstantPersonaReply(query: string, data: PortfolioData): string {
+  const q = query.toLowerCase().trim();
+
+  // Tech stack & skills
+  if (
+    q.includes('stack') ||
+    q.includes('skill') ||
+    q.includes('tech') ||
+    q.includes('language') ||
+    q.includes('framework') ||
+    q.includes('flutter') ||
+    q.includes('react') ||
+    q.includes('backend') ||
+    q.includes('frontend')
+  ) {
+    const skills = (data.skillCategories || [])
+      .map((c) => `• **${c.category}**: ${c.skills.slice(0, 5).join(', ')}`)
+      .join('\n');
+    return `My core engineering stack focuses on mobile and full-stack software development:\n\n${skills}\n\nI build fast, cross-platform apps with Flutter & Dart, enterprise services with Java & Spring Boot, and modern web apps with React & TypeScript.`;
+  }
+
+  // Hiring, contracts & availability
+  if (
+    q.includes('hire') ||
+    q.includes('available') ||
+    q.includes('contract') ||
+    q.includes('job') ||
+    q.includes('collaborat') ||
+    q.includes('work') ||
+    q.includes('freelance') ||
+    q.includes('salary') ||
+    q.includes('rate')
+  ) {
+    return `Yes! I am actively available for full-time software engineering roles, mobile/web contract projects, and remote collaboration.\n\nFeel free to reach out directly to discuss opportunities:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})`;
+  }
+
+  // Projects & portfolio
+  if (
+    q.includes('project') ||
+    q.includes('portfolio') ||
+    q.includes('built') ||
+    q.includes('app') ||
+    q.includes('github')
+  ) {
+    const topProjects = (data.projects || [])
+      .slice(0, 3)
+      .map((p) => `• **${p.title}** (${p.category}): ${p.subtitle || p.description?.slice(0, 80) + '...'}`)
+      .join('\n');
+    return `Here are some of my featured engineering projects:\n\n${topProjects}\n\nYou can explore live demos and source code directly in the **Projects** section on this page or visit my [GitHub](https://github.com/Shoron-hossen).`;
+  }
+
+  // Education & background
+  if (
+    q.includes('education') ||
+    q.includes('study') ||
+    q.includes('university') ||
+    q.includes('degree') ||
+    q.includes('school') ||
+    q.includes('college') ||
+    q.includes('student') ||
+    q.includes('bsc') ||
+    q.includes('cse')
+  ) {
+    const edu = data.educations?.[0];
+    return `I am currently pursuing a **${edu?.title || 'B.Sc. in Computer Science and Engineering'}** at **${edu?.institution || 'Green University of Bangladesh, Dhaka'}** (${edu?.period || '2022 — Present'}), with an active focus on scalable mobile architectures, backend services, and AI integrations.`;
+  }
+
+  // Contact / phone / email
+  if (
+    q.includes('contact') ||
+    q.includes('email') ||
+    q.includes('phone') ||
+    q.includes('whatsapp') ||
+    q.includes('message') ||
+    q.includes('reach')
+  ) {
+    return `You can reach me directly through any of the following channels:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})\n• **LinkedIn**: [Profile](${data.socials?.linkedin || 'https://linkedin.com/in/shoron-hossen'})`;
+  }
+
+  // Ventures / fashion / modeling
+  if (
+    q.includes('modeling') ||
+    q.includes('fashion') ||
+    q.includes('venture') ||
+    q.includes('asora') ||
+    q.includes('lehja') ||
+    q.includes('brand')
+  ) {
+    return `Alongside my software engineering work, I am an entrepreneur and editorial model. I have founded brands including **ASORA CLOTHING** and **Lehja**, and engaged in high-fashion editorial runways and campaigns. You can check out my dedicated Modeling page for visual showcases!`;
+  }
+
+  // About / Bio / Introduction
+  return `Hi! I'm **${data.name}**, a ${data.role || 'Full-Stack & Mobile Developer'} based in Dhaka, Bangladesh. ${data.bio}\n\nFeel free to ask about my projects, technical stack, or contact me directly on WhatsApp at **${data.phone || '01888668396'}**!`;
+}
+
+// Ultra-fast Gemini dispatcher with parallel race, 2.5s cap, and instant fallback
 async function callGeminiApi(
   apiKey: string,
   contents: Array<{ role: string; parts: Array<{ text: string }> }>,
-  systemPrompt: string
+  systemPrompt: string,
+  userQuery: string,
+  data: PortfolioData
 ): Promise<string> {
-  // Universal dialog payload that works reliably across all Gemini models
   const fullContents = [
     {
       role: 'user',
-      parts: [
-        {
-          text: `[SYSTEM INSTRUCTION & PERSONA GUIDELINES]\n${systemPrompt}\n[END OF SYSTEM INSTRUCTIONS]\n\nPlease acknowledge and stay in character.`,
-        },
-      ],
+      parts: [{ text: `[System Instructions]: ${systemPrompt}\n\nAcknowledge.` }],
     },
     {
       role: 'model',
-      parts: [
-        {
-          text: `Understood! I am Shoron Hossen and I will speak in the first person as myself according to these guidelines.`,
-        },
-      ],
+      parts: [{ text: `Understood! I will reply concisely as Shoron Hossen.` }],
     },
     ...contents,
   ];
@@ -115,109 +217,48 @@ async function callGeminiApi(
     contents: fullContents,
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 500,
+      maxOutputTokens: 250,
     },
   };
 
-  // 1. FAST PATH: If we already have a cached working model, call it directly (sub-second!)
-  if (cachedModel) {
-    try {
-      const fastUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cachedModel}:generateContent?key=${encodeURIComponent(
-        apiKey
-      )}`;
-      const fastRes = await fetch(fastUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const fastJson = await fastRes.json();
-      if (fastRes.ok && fastJson?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return fastJson.candidates[0].content.parts[0].text;
-      }
-    } catch {
-      // Clear cache on failure and continue to discovery
-      cachedModel = '';
+  // 1. FAST PATH: If cached working endpoint is known, call directly with 2.5s timeout
+  if (cachedEndpoint) {
+    const [apiVersion, model] = cachedEndpoint.split('/') as ['v1' | 'v1beta', string];
+    if (apiVersion && model) {
       try {
-        localStorage.removeItem('shoron_active_gemini_model');
-      } catch {}
-    }
-  }
-
-  // 2. PRIMARY DIRECT CANDIDATES (Try immediately without waiting for listModels)
-  const priorityCandidates = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash-002',
-    'gemini-1.5-flash',
-    'gemini-pro',
-  ];
-
-  for (const model of priorityCandidates) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
-        apiKey
-      )}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const resJson = await res.json();
-      if (res.ok && resJson?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        cachedModel = model;
+        const result = await executeSingleModelWithTimeout(
+          { apiVersion, model },
+          apiKey,
+          payload,
+          2500
+        );
+        return result.text;
+      } catch {
+        cachedEndpoint = '';
         try {
-          localStorage.setItem('shoron_active_gemini_model', model);
+          localStorage.removeItem('shoron_active_gemini_endpoint');
         } catch {}
-        return resJson.candidates[0].content.parts[0].text;
       }
-    } catch {
-      continue;
     }
   }
 
-  // 3. FALLBACK DISCOVERY: Query /v1beta/models only if direct candidates failed
-  let discoveredModels: string[] = [];
+  // 2. CONCURRENT PARALLEL RACE: All candidate flash models race simultaneously
+  // Capped at 2.5 seconds maximum so the user NEVER waits 10-20 seconds!
   try {
-    const listRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
+    const winner = await Promise.any(
+      FAST_CANDIDATES.map((candidate) =>
+        executeSingleModelWithTimeout(candidate, apiKey, payload, 2500)
+      )
     );
-    const listJson = await listRes.json();
-    if (listJson?.models && Array.isArray(listJson.models)) {
-      discoveredModels = listJson.models
-        .filter(
-          (m: { name?: string; supportedGenerationMethods?: string[] }) =>
-            m.name &&
-            m.supportedGenerationMethods?.includes('generateContent') &&
-            !m.name.includes('embedding')
-        )
-        .map((m: { name: string }) => m.name.replace(/^models\//, ''));
-    }
-  } catch {}
-
-  for (const model of discoveredModels) {
+    cachedEndpoint = winner.endpointKey;
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
-        apiKey
-      )}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const resJson = await res.json();
-      if (res.ok && resJson?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        cachedModel = model;
-        try {
-          localStorage.setItem('shoron_active_gemini_model', model);
-        } catch {}
-        return resJson.candidates[0].content.parts[0].text;
-      }
-    } catch {
-      continue;
-    }
+      localStorage.setItem('shoron_active_gemini_endpoint', winner.endpointKey);
+    } catch {}
+    return winner.text;
+  } catch {
+    // If external Gemini API is unreachable or times out, immediately use the Instant Persona Engine
+    return generateInstantPersonaReply(userQuery, data);
   }
-
-  throw new Error('Unable to connect to Gemini API. Please check your Gemini API key in the Admin CMS.');
 }
 
 interface ShoronAiChatProps {
@@ -269,18 +310,20 @@ export default function ShoronAiChat({ data }: ShoronAiChatProps) {
     setLoading(true);
 
     if (!apiKey) {
+      // Instant response using local persona intelligence
       setTimeout(() => {
+        const instantReply = generateInstantPersonaReply(messageText, data);
         setMessages((prev) => [
           ...prev,
           {
             id: `a-${Date.now()}`,
             role: 'assistant',
-            content: `I'm ready to chat! Please configure your **Google Gemini API Key** in the Admin CMS (/admin ➔ Settings tab) to activate live answers.`,
+            content: instantReply,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
         setLoading(false);
-      }, 500);
+      }, 300);
       return;
     }
 
@@ -295,7 +338,7 @@ export default function ShoronAiChat({ data }: ShoronAiChatProps) {
           parts: [{ text: m.content }],
         }));
 
-      const replyText = await callGeminiApi(apiKey, contents, systemPrompt);
+      const replyText = await callGeminiApi(apiKey, contents, systemPrompt, messageText, data);
 
       setMessages((prev) => [
         ...prev,
@@ -306,15 +349,15 @@ export default function ShoronAiChat({ data }: ShoronAiChatProps) {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
-    } catch (err: unknown) {
-      console.error('Gemini chat error:', err);
-      const errStr = err instanceof Error ? err.message : 'Connection failed';
+    } catch {
+      // If any unexpected exception occurs, deliver instant persona reply immediately
+      const fallbackReply = generateInstantPersonaReply(messageText, data);
       setMessages((prev) => [
         ...prev,
         {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: `⚠️ ${errStr}\n\nYou can also reach out to me directly at **${data.email}** or WhatsApp **${data.phone || '01888668396'}**.`,
+          content: fallbackReply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
