@@ -196,7 +196,7 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
   return `Thanks for reaching out! Regarding "${query.slice(0, 50)}", I'd be glad to discuss details with you. I specialize in Flutter mobile apps, Java/Spring Boot backends, and full-stack solutions. You can also message me directly on WhatsApp at **${data.phone || '01888668396'}** or email **${data.email}**!`;
 }
 
-// Multi-tier AI dispatcher: Cloudflare Edge Workers AI + Gemini API race
+// Multi-tier AI dispatcher: Gemini API + Cloudflare Edge AI + Free Neural AI (Pollinations)
 async function callAiChatService(
   apiKey: string,
   contents: Array<{ role: string; parts: Array<{ text: string }> }>,
@@ -204,33 +204,9 @@ async function callAiChatService(
   userQuery: string,
   data: PortfolioData
 ): Promise<string> {
-  // Tier 1: Try Cloudflare Edge Chat Endpoint (/api/chat)
-  try {
-    const edgeRes = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: contents.map((c) => ({
-          role: c.role === 'model' ? 'assistant' : 'user',
-          content: c.parts?.[0]?.text || '',
-        })),
-        systemPrompt,
-        geminiApiKey: apiKey || undefined,
-      }),
-      signal: AbortSignal.timeout(3000),
-    });
+  const promises: Promise<string>[] = [];
 
-    if (edgeRes.ok) {
-      const edgeJson = (await edgeRes.json()) as any;
-      if (edgeJson?.success && edgeJson?.reply) {
-        return edgeJson.reply;
-      }
-    }
-  } catch {
-    // Edge endpoint skipped / offline
-  }
-
-  // Tier 2: If Gemini API key is configured, race fast models directly from client
+  // Tier 1: If user provided Google Gemini API key, race fast Gemini models
   if (apiKey) {
     const fullContents = [
       {
@@ -249,17 +225,64 @@ async function callAiChatService(
       generationConfig: { temperature: 0.7, maxOutputTokens: 250 },
     };
 
-    try {
-      const winner = await Promise.any(
-        FAST_CANDIDATES.map((c) => executeSingleModelWithTimeout(c, apiKey, payload, 2500))
-      );
-      return winner.text;
-    } catch {
-      // Fallback to local persona generator
-    }
+    promises.push(
+      Promise.any(
+        FAST_CANDIDATES.map((c) =>
+          executeSingleModelWithTimeout(c, apiKey, payload, 2500).then((r) => r.text)
+        )
+      )
+    );
   }
 
-  // Tier 3: Instant dynamic persona generator (<10ms, multi-intent, varied replies)
+  // Tier 2: Cloudflare Edge Chat Endpoint (/api/chat)
+  promises.push(
+    (async () => {
+      const edgeRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: contents.map((c) => ({
+            role: c.role === 'model' ? 'assistant' : 'user',
+            content: c.parts?.[0]?.text || '',
+          })),
+          systemPrompt,
+          geminiApiKey: apiKey || undefined,
+        }),
+        signal: AbortSignal.timeout(2800),
+      });
+      if (!edgeRes.ok) throw new Error('Edge unavailable');
+      const edgeJson = (await edgeRes.json()) as any;
+      if (edgeJson?.success && edgeJson?.reply) return edgeJson.reply;
+      throw new Error('No edge reply');
+    })()
+  );
+
+  // Tier 3: Zero-key Free Neural AI via Pollinations (Works everywhere including localhost!)
+  promises.push(
+    (async () => {
+      const promptParam = encodeURIComponent(userQuery);
+      const systemParam = encodeURIComponent(
+        `You are MD. Shoron Hossen, a Full-Stack Software Developer from Dhaka, Bangladesh. Speak warmly and authentically in the first person ("I", "my") as Shoron. Your stack is Flutter, Dart, Java, Spring Boot, React, and MySQL. Phone/WhatsApp: ${data.phone || '01888668396'}, Email: ${data.email}. Reply in 2-3 concise sentences.`
+      );
+      const url = `https://text.pollinations.ai/${promptParam}?system=${systemParam}&model=openai`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      if (!res.ok) throw new Error('Pollinations unavailable');
+      const text = await res.text();
+      if (!text || text.includes('<!DOCTYPE') || text.length < 5) throw new Error('Invalid AI response');
+      return text.trim();
+    })()
+  );
+
+  try {
+    // Whichever AI provider responds first with valid text wins!
+    const reply = await Promise.any(promises);
+    if (reply && reply.trim().length > 0) {
+      return reply;
+    }
+  } catch {
+    // If all online AI providers fail or user is offline, use intelligent persona engine
+  }
+
   return generateInstantPersonaReply(userQuery, data);
 }
 

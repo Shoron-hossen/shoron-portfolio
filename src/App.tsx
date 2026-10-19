@@ -408,9 +408,6 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
 
-    setLoading(true);
-    setErrorMessage('');
-
     const recipientEmail = data.email || 'meshoron53@gmail.com';
     const backupRecipient = 'shoronhossen886@gmail.com';
 
@@ -424,52 +421,42 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
       _captcha: 'false',
     };
 
-    try {
-      // 1. Direct browser submission to primary recipient
-      const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+    // Instant zero-delay confirmation: Show success immediately in 50ms!
+    setSent(true);
+    setLoading(false);
+    setErrorMessage('');
+    setName('');
+    setEmail('');
+    setSubject('');
+    setMessage('');
+    setTimeout(() => setSent(false), 9000);
 
-      const resJson = (await res.json().catch(() => ({}))) as any;
+    // Non-blocking background dispatch to FormSubmit with strict 5-second timeout
+    const dispatchMail = async () => {
+      try {
+        fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(5000),
+        }).catch(() => {});
 
-      // 2. Background dispatch to secondary email
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(backupRecipient)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      }).catch(() => {});
+        fetch(`https://formsubmit.co/ajax/${encodeURIComponent(backupRecipient)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(5000),
+        }).catch(() => {});
+      } catch {}
+    };
 
-      if (resJson?.message && typeof resJson.message === 'string' && resJson.message.toLowerCase().includes('activation')) {
-        setErrorMessage(
-          `Notice: FormSubmit sent a 1-time activation link to ${recipientEmail}. Please check your Gmail and click 'Activate Form' once to complete activation!`
-        );
-      } else {
-        setSent(true);
-        setName('');
-        setEmail('');
-        setSubject('');
-        setMessage('');
-        setTimeout(() => setSent(false), 9000);
-      }
-    } catch {
-      // If network blocked or CORS error, fall back to success state
-      setSent(true);
-      setName('');
-      setEmail('');
-      setSubject('');
-      setMessage('');
-      setTimeout(() => setSent(false), 9000);
-    } finally {
-      setLoading(false);
-    }
+    dispatchMail();
   };
 
   return (
