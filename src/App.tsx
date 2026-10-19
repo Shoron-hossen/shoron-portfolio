@@ -431,29 +431,24 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
     setMessage('');
     setTimeout(() => setSent(false), 9000);
 
-    // Non-blocking background dispatch to FormSubmit with strict 5-second timeout
+    // Non-blocking background dispatch — fires to multiple providers for reliability
     const dispatchMail = async () => {
-      try {
-        fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(5000),
-        }).catch(() => {});
+      const msgPayload = JSON.stringify(payload);
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      const sig = AbortSignal.timeout(8000);
 
-        fetch(`https://formsubmit.co/ajax/${encodeURIComponent(backupRecipient)}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(5000),
-        }).catch(() => {});
-      } catch {}
+      // Provider 1: FormSubmit to primary email (meshoron53@gmail.com)
+      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
+        method: 'POST', headers, body: msgPayload, signal: sig,
+      }).catch(() => {});
+
+      // Provider 2: FormSubmit to backup email (shoronhossen886@gmail.com)
+      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(backupRecipient)}`, {
+        method: 'POST', headers, body: msgPayload, signal: AbortSignal.timeout(8000),
+      }).catch(() => {});
     };
 
     dispatchMail();

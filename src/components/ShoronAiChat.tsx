@@ -19,24 +19,61 @@ interface Message {
 
 export function buildShoronPersonaPrompt(data: PortfolioData): string {
   const skillList = (data.skillCategories || [])
-    .map((c) => `${c.category}: ${c.skills.slice(0, 6).join(', ')}`)
+    .map((c) => `${c.category}: ${c.skills.join(', ')}`)
     .join(' | ');
 
-  const projectList = (data.projects || [])
-    .slice(0, 4)
-    .map((p) => `${p.title} (${p.category}): ${p.subtitle}`)
-    .join('; ');
+  const experienceList = (data.experiences || [])
+    .map((e) => `• ${e.title} at ${e.company} (${e.period}): ${e.description}`)
+    .join('\n');
 
-  return `You are MD. SHORON HOSSEN (Full-Stack Developer, Mobile & Web, Backend Architecture, Dhaka, Bangladesh).
-Speak in the FIRST PERSON ("I", "my") as Shoron.
-Email: ${data.email} | Phone/WhatsApp: ${data.phone || '01888668396'}.
-Skills: ${skillList}.
-Projects: ${projectList}.
-Bio: ${data.bio}
-Rules:
-1. Speak warmly, professionally, and concisely (2-4 sentences max per reply).
-2. If asked to hire, contract, or collaborate, invite them to WhatsApp (${data.phone || '01888668396'}) or email (${data.email}).
-${data.aiSystemPrompt ? `\nNote: ${data.aiSystemPrompt}` : ''}`;
+  const educationList = (data.educations || [])
+    .map((e) => `• ${e.title} — ${e.institution} (${e.period})`)
+    .join('\n');
+
+  const projectList = (data.projects || [])
+    .slice(0, 5)
+    .map((p) => `• ${p.title} (${p.category}): ${p.subtitle} — Tech: ${p.technologies?.slice(0, 4).join(', ')}`)
+    .join('\n');
+
+  const faqList = (data.faqs || [])
+    .slice(0, 5)
+    .map((f) => `Q: ${f.question}\nA: ${f.answer}`)
+    .join('\n');
+
+  return `You are MD. SHORON HOSSEN, a Full-Stack Software Developer from Dhaka, Bangladesh.
+Always respond in the FIRST PERSON ("I", "my", "me") as Shoron.
+
+=== CONTACT ===
+Email: ${data.email}
+Phone/WhatsApp: ${data.phone || '01888668396'}
+Location: ${data.location}
+GitHub: https://github.com/Shoron-hossen
+LinkedIn: ${data.socials?.linkedin || 'https://linkedin.com/in/shoron-hossen'}
+
+=== BIO ===
+${data.bio}
+
+=== SKILLS ===
+${skillList}
+
+=== EXPERIENCE ===
+${experienceList}
+
+=== EDUCATION ===
+${educationList}
+
+=== FEATURED PROJECTS ===
+${projectList}
+
+=== FAQ ===
+${faqList}
+
+=== RULES ===
+1. Always answer from the data above — experience years, companies, education, projects are all real.
+2. Speak warmly, clearly, and concisely (3-5 sentences max). Never say "I cannot" or "I don't know".
+3. If asked about hiring, contracts, or collaboration, invite them to WhatsApp (${data.phone || '01888668396'}) or email (${data.email}).
+4. If a question doesn't match any data, give a helpful redirect to the most relevant topic.
+${data.aiSystemPrompt ? `\n5. Custom instructions: ${data.aiSystemPrompt}` : ''}`;
 }
 
 
@@ -232,9 +269,12 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
     return `Alongside software engineering, I am the founder of ventures including **ASORA CLOTHING** and **Lehja**, and I have worked in professional fashion and commercial editorial modeling. Feel free to check out the Modeling tab on this site for photo showcases!`;
   }
 
-  // 17. Experience / CV / resume
-  if (q.includes('experience') || q.includes('cv') || q.includes('resume') || q.includes('history')) {
-    return `I have hands-on experience building full-stack products from concept to deployment. You can download my complete CV by clicking the **Download CV** button on the page, or ask me about any specific technical domain!`;
+  // 17. Experience / CV / resume / year
+  if (q.includes('experience') || q.includes('cv') || q.includes('resume') || q.includes('history') || q.includes('year') || q.includes('work') || q.includes('company') || q.includes('job')) {
+    const expList = (data.experiences || [])
+      .map((e) => `• **${e.title}** — ${e.company} *(${e.period})*\n  ${e.description}`)
+      .join('\n\n');
+    return `Here is my professional work experience:\n\n${expList}\n\nYou can also download my full CV using the **Download CV** button on this page!`;
   }
 
   // Dynamic natural responses instead of a repetitive template
@@ -311,11 +351,10 @@ async function callAiChatService(
   promises.push(
     (async () => {
       const promptParam = encodeURIComponent(userQuery);
-      const systemParam = encodeURIComponent(
-        `You are MD. Shoron Hossen, a Full-Stack Software Developer from Dhaka, Bangladesh. Speak warmly and authentically in the first person ("I", "my") as Shoron. Your stack is Flutter, Dart, Java, Spring Boot, React, and MySQL. Phone/WhatsApp: ${data.phone || '01888668396'}, Email: ${data.email}. Reply in 2-3 concise sentences.`
-      );
+      // Use the full system prompt (same as Gemini) so Pollinations has ALL portfolio data
+      const systemParam = encodeURIComponent(systemPrompt);
       const url = `https://text.pollinations.ai/${promptParam}?system=${systemParam}&model=openai`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error('Pollinations unavailable');
       const text = await res.text();
       if (!text || text.includes('<!DOCTYPE') || text.length < 5) throw new Error('Invalid AI response');
