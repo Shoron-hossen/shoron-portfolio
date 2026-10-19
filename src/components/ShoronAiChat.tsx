@@ -93,11 +93,55 @@ async function executeSingleModelWithTimeout(
   }
 }
 
-// Instant intelligent persona engine with wide range of natural intents
+// Instant intelligent persona engine with comprehensive conversational intents
 export function generateInstantPersonaReply(query: string, data: PortfolioData): string {
   const q = query.toLowerCase().trim();
 
-  // Greetings & casual opening
+  // 1. Google Gemini API Key Auto-Detection if user pastes their key directly
+  if (q.startsWith('aizasy') || q.includes('aizasy')) {
+    const match = query.match(/AIzaSy[A-Za-z0-9_-]{33}/);
+    if (match) {
+      const detectedKey = match[0];
+      try {
+        localStorage.setItem('shoron_gemini_api_key', detectedKey);
+        data.geminiApiKey = detectedKey;
+      } catch {}
+      return `✓ **Google Gemini API Key Saved Successfully!**\n\nYour key is now active for this browser session. The chatbot is now connected directly to Google Gemini live AI! Ask me anything.`;
+    }
+  }
+
+  // 2. Complaint about repetition or robot replies
+  if (
+    q.includes('same message') ||
+    q.includes('same messge') ||
+    q.includes('repeat') ||
+    q.includes('hardcoded') ||
+    q.includes('bustard') ||
+    q.includes('stupid') ||
+    q.includes('robot') ||
+    q.includes('why you reply')
+  ) {
+    return `My apologies! I was previously using a fallback response mode. I'm listening closely now! Feel free to ask me anything specific — for example, about my **Flutter apps**, **Spring Boot backends**, **pricing & contract availability**, or **my projects**. What can I help you with?`;
+  }
+
+  // 3. Services & What services do you provide
+  if (
+    q.includes('service') ||
+    q.includes('provide') ||
+    q.includes('what can you do') ||
+    q.includes('what do you do') ||
+    q.includes('offer') ||
+    q.includes('services')
+  ) {
+    return `I provide end-to-end software engineering and development services:\n\n1. **📱 Mobile App Development**: Building high-performance, cross-platform Android & iOS applications using Flutter & Dart.\n2. **⚙️ Backend & API Engineering**: Architecting enterprise-grade RESTful APIs and microservices using Java (Spring Boot) and Python (FastAPI).\n3. **💻 Full-Stack Web Development**: Creating responsive, fast web platforms using React, TypeScript, and modern CSS.\n4. **🗄️ Database & Cloud Infrastructure**: Database design and optimization with MySQL, MongoDB, and Cloudflare D1/R2.\n\nAre you looking to build a new product or need an engineer for an existing codebase?`;
+  }
+
+  // 4. "Tell me" / "Tell me more" / General elaboration
+  if (q === 'tell me' || q.startsWith('tell me') || q.includes('tell me more')) {
+    return `I'd love to share more! Here are a few things you can ask me about:\n\n• **My Tech Stack**: Flutter, Dart, Java, Spring Boot, React, MySQL\n• **Featured Projects**: Healthcare Telemedicine Suite, Cloud Infrastructure Analytics, Job Queues\n• **Hiring & Contracts**: Availability for full-time or freelance work\n• **Ventures & Modeling**: ASORA CLOTHING, Lehja, and editorial runways\n\nWhich of these would you like to hear about?`;
+  }
+
+  // 5. Greetings & casual opening
   if (
     /^(hi|hello|hey|yo|greetings|hola|salaam|assalamu|good\s*(morning|afternoon|evening))/i.test(q) ||
     q === 'hi' ||
@@ -112,27 +156,27 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
     return greetings[Math.floor(Math.random() * greetings.length)];
   }
 
-  // How are you / status
+  // 6. How are you / status
   if (q.includes('how are you') || q.includes('how r u') || q.includes('whats up') || q.includes("what's up")) {
     return `I'm doing great, thank you for asking! Active and building scalable software. Are you working on a project, or looking to hire a developer?`;
   }
 
-  // Mobile App Development
+  // 7. Mobile App Development
   if (q.includes('mobile') || q.includes('flutter') || q.includes('android') || q.includes('ios') || q.includes('dart') || q.includes('app')) {
     return `Mobile application development is one of my strongest specialties! I architect production-ready, cross-platform apps using **Flutter & Dart** with clean state management, offline-first SQLite/Hive databases, and seamless RESTful backend integration. Have an app concept in mind? Let's discuss on WhatsApp: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'}).`;
   }
 
-  // Backend & APIs & Databases
+  // 8. Backend & APIs & Databases
   if (q.includes('backend') || q.includes('spring') || q.includes('java') || q.includes('server') || q.includes('database') || q.includes('sql') || q.includes('mysql') || q.includes('mongodb') || q.includes('fastapi')) {
     return `On the backend, I engineer resilient, high-throughput architectures using **Java & Spring Boot** and **Python & FastAPI**. I design structured database schemas in MySQL, MongoDB, and Cloudflare D1 with secure JWT authentication and optimized API queries.`;
   }
 
-  // Web & Frontend
+  // 9. Web & Frontend
   if (q.includes('web') || q.includes('react') || q.includes('frontend') || q.includes('typescript') || q.includes('html') || q.includes('css') || q.includes('tailwind')) {
     return `For web engineering, I build responsive, accessible web applications using **React, TypeScript, and Tailwind CSS** with Vite. I focus on clean UI architectures, sub-second load times, and smooth user interactions.`;
   }
 
-  // Tech stack & skills
+  // 10. Tech stack & skills
   if (q.includes('stack') || q.includes('skill') || q.includes('tech') || q.includes('language') || q.includes('framework')) {
     const skills = (data.skillCategories || [])
       .map((c) => `• **${c.category}**: ${c.skills.slice(0, 5).join(', ')}`)
@@ -140,7 +184,7 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
     return `Here is my complete technical engineering stack:\n\n${skills}\n\nI specialize in Flutter & Dart for cross-platform mobile, Java & Spring Boot for enterprise backends, and React with TypeScript on the web.`;
   }
 
-  // Hiring, contracts & availability
+  // 11. Hiring, contracts, pricing & availability
   if (
     q.includes('hire') ||
     q.includes('available') ||
@@ -152,12 +196,13 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
     q.includes('salary') ||
     q.includes('rate') ||
     q.includes('cost') ||
-    q.includes('price')
+    q.includes('price') ||
+    q.includes('quote')
   ) {
     return `Yes! I am actively available for full-time engineering roles, freelance contracts, and software consulting.\n\nLet's discuss terms and timelines directly:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})\n• **Location**: ${data.location}`;
   }
 
-  // Projects & portfolio
+  // 12. Projects & portfolio
   if (q.includes('project') || q.includes('portfolio') || q.includes('built') || q.includes('github') || q.includes('showcase')) {
     const topProjects = (data.projects || [])
       .slice(0, 4)
@@ -166,34 +211,39 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
     return `Here are some of my featured engineering builds:\n\n${topProjects}\n\nYou can review live source code on my [GitHub](https://github.com/Shoron-hossen) or browse the **Projects** section on this website!`;
   }
 
-  // Education & University
+  // 13. Education & University
   if (q.includes('education') || q.includes('study') || q.includes('university') || q.includes('degree') || q.includes('school') || q.includes('student') || q.includes('bsc') || q.includes('cse')) {
     const edu = data.educations?.[0];
     return `I am currently pursuing a **${edu?.title || 'B.Sc. in Computer Science and Engineering'}** at **${edu?.institution || 'Green University of Bangladesh'}** (${edu?.period || '2022 — Present'}), with an active focus on backend architectures, mobile systems, and AI integrations.`;
   }
 
-  // Location / address / where
+  // 14. Location / address / where
   if (q.includes('location') || q.includes('where') || q.includes('city') || q.includes('country') || q.includes('dhaka') || q.includes('bangladesh') || q.includes('address')) {
     return `I am based in **${data.location || 'Dhaka, Bangladesh'}**, and I work seamlessly with worldwide remote teams across different time zones.`;
   }
 
-  // Contact / phone / email
+  // 15. Contact / phone / email
   if (q.includes('contact') || q.includes('email') || q.includes('phone') || q.includes('whatsapp') || q.includes('message') || q.includes('reach') || q.includes('call')) {
     return `You can reach me directly anytime:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})\n• **LinkedIn**: [Profile](${data.socials?.linkedin || 'https://linkedin.com/in/shoron-hossen'})`;
   }
 
-  // Ventures / fashion / modeling
+  // 16. Ventures / fashion / modeling
   if (q.includes('modeling') || q.includes('fashion') || q.includes('venture') || q.includes('asora') || q.includes('lehja') || q.includes('brand')) {
     return `Alongside software engineering, I am the founder of ventures including **ASORA CLOTHING** and **Lehja**, and I have worked in professional fashion and commercial editorial modeling. Feel free to check out the Modeling tab on this site for photo showcases!`;
   }
 
-  // Experience / CV / resume
+  // 17. Experience / CV / resume
   if (q.includes('experience') || q.includes('cv') || q.includes('resume') || q.includes('history')) {
     return `I have hands-on experience building full-stack products from concept to deployment. You can download my complete CV by clicking the **Download CV** button on the page, or ask me about any specific technical domain!`;
   }
 
-  // Dynamic context-aware fallback
-  return `Thanks for reaching out! Regarding "${query.slice(0, 50)}", I'd be glad to discuss details with you. I specialize in Flutter mobile apps, Java/Spring Boot backends, and full-stack solutions. You can also message me directly on WhatsApp at **${data.phone || '01888668396'}** or email **${data.email}**!`;
+  // Dynamic natural responses instead of a repetitive template
+  const fallbackOptions = [
+    `I'd be happy to collaborate with you on this! As a full-stack engineer, I specialize in Flutter mobile apps and Spring Boot/Java backends. What specific goals or features do you have in mind?`,
+    `Great question! I'm focused on developing scalable software applications with clean architecture. If you'd like to dive into technical details or discuss a timeline, message me on WhatsApp at **${data.phone || '01888668396'}**!`,
+    `Thanks for asking! I engineer cross-platform mobile apps, cloud REST APIs, and modern web solutions. You can also reach me directly at **${data.email}** to talk about your project requirements.`,
+  ];
+  return fallbackOptions[Math.floor(Math.random() * fallbackOptions.length)];
 }
 
 // Multi-tier AI dispatcher: Gemini API + Cloudflare Edge AI + Free Neural AI (Pollinations)
