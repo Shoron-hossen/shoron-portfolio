@@ -26,10 +26,27 @@
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
   }
 
-  @media (min-width: 1024px) {
+  /* Mobile & Touch Devices: strict native momentum scrolling, no synthetic smoothing friction */
+  @media (max-width: 1023px), (pointer: coarse) {
+    html, body {
+      scroll-behavior: auto !important;
+      touch-action: pan-y;
+      overscroll-behavior-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    html.lenis, html.lenis body {
+      height: 100% !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Desktop Devices (Mouse / Fine Pointer): Lenis integration & smooth navigation */
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+    html:not(.lenis) {
+      scroll-behavior: smooth;
+    }
     html.lenis, html.lenis body {
       height: auto;
     }
@@ -46,6 +63,16 @@
       pointer-events: none;
     }
   }
+}
+
+/* ─── GPU Layer Acceleration Utility (60fps compositor promotion) ─────── */
+.lp-gpu {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
 }
 
 /* ─── High-Contrast Bespoke Button Styling (Vercel / Linear / Apple Standard) ─── */
@@ -103,24 +130,26 @@
 /* ─── Star animations (GPU Hardware-Accelerated, Zero-Lag, Ultra-Sharp) ─── */
 @keyframes twinkle {
   0%, 100% {
-    opacity: 0.25;
-    transform: translate3d(0, 0, 0) scale(0.8);
+    opacity: 0.2;
+    transform: translate3d(0, 0, 0) scale(0.85);
   }
   50% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1.2);
+    opacity: 0.95;
+    transform: translate3d(0, 0, 0) scale(1.15);
   }
 }
 .lp-star {
   position: absolute;
   border-radius: 9999px;
   background-color: #ffffff;
-  will-change: opacity, transform;
   transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   animation: twinkle var(--dur, 4s) ease-in-out infinite;
   animation-delay: var(--delay, 0s);
   pointer-events: none;
-  box-shadow: 0 0 3px rgba(255, 255, 255, 0.7);
+  contain: layout style paint;
 }
 
 @keyframes shootingStar {

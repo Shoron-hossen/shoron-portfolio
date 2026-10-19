@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
@@ -32,58 +32,423 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Layout, Server, Cpu, Award, Terminal, Code2, Globe, BookOpen
 };
 
+// High-Resolution Ambient Starfield across website (GPU Hardware Accelerated, Zero Lag)
+const AMBIENT_STARS = [
+  { left: '5%', top: '8%', dur: '4.2s', delay: '0.2s', size: 'h-1 w-1' },
+  { left: '14%', top: '18%', dur: '3.6s', delay: '1.1s', size: 'h-1.5 w-1.5' },
+  { left: '22%', top: '10%', dur: '5.1s', delay: '2.3s', size: 'h-1 w-1' },
+  { left: '31%', top: '24%', dur: '4.0s', delay: '0.7s', size: 'h-1.5 w-1.5' },
+  { left: '42%', top: '12%', dur: '6.2s', delay: '1.8s', size: 'h-1 w-1' },
+  { left: '56%', top: '20%', dur: '3.8s', delay: '0.4s', size: 'h-1.5 w-1.5' },
+  { left: '68%', top: '9%', dur: '5.5s', delay: '2.6s', size: 'h-1 w-1' },
+  { left: '78%', top: '26%', dur: '4.4s', delay: '1.2s', size: 'h-1.5 w-1.5' },
+  { left: '88%', top: '14%', dur: '5.9s', delay: '0.9s', size: 'h-1 w-1' },
+  { left: '95%', top: '22%', dur: '3.5s', delay: '2.0s', size: 'h-1.5 w-1.5' },
+  { left: '8%', top: '38%', dur: '4.7s', delay: '1.4s', size: 'h-1 w-1' },
+  { left: '19%', top: '48%', dur: '5.8s', delay: '0.5s', size: 'h-1.5 w-1.5' },
+  { left: '33%', top: '42%', dur: '3.9s', delay: '2.2s', size: 'h-1 w-1' },
+  { left: '48%', top: '52%', dur: '6.0s', delay: '1.6s', size: 'h-1.5 w-1.5' },
+  { left: '62%', top: '44%', dur: '4.3s', delay: '0.8s', size: 'h-1 w-1' },
+  { left: '74%', top: '56%', dur: '5.2s', delay: '2.5s', size: 'h-1.5 w-1.5' },
+  { left: '86%', top: '46%', dur: '3.7s', delay: '1.0s', size: 'h-1 w-1' },
+  { left: '94%', top: '40%', dur: '5.3s', delay: '1.9s', size: 'h-1.5 w-1.5' },
+  { left: '11%', top: '68%', dur: '5.4s', delay: '2.1s', size: 'h-1 w-1' },
+  { left: '26%', top: '78%', dur: '4.1s', delay: '0.6s', size: 'h-1.5 w-1.5' },
+  { left: '40%', top: '72%', dur: '6.3s', delay: '1.7s', size: 'h-1 w-1' },
+  { left: '54%', top: '82%', dur: '3.6s', delay: '2.4s', size: 'h-1.5 w-1.5' },
+  { left: '70%', top: '74%', dur: '5.0s', delay: '0.9s', size: 'h-1 w-1' },
+  { left: '84%', top: '84%', dur: '4.5s', delay: '1.5s', size: 'h-1.5 w-1.5' },
+  { left: '92%', top: '76%', dur: '5.7s', delay: '2.8s', size: 'h-1 w-1' },
+  { left: '6%', top: '90%', dur: '4.8s', delay: '1.3s', size: 'h-1 w-1' },
+  { left: '22%', top: '93%', dur: '5.6s', delay: '2.2s', size: 'h-1.5 w-1.5' },
+  { left: '47%', top: '91%', dur: '4.1s', delay: '0.4s', size: 'h-1 w-1' },
+  { left: '65%', top: '94%', dur: '6.2s', delay: '1.8s', size: 'h-1.5 w-1.5' },
+  { left: '88%', top: '92%', dur: '5.0s', delay: '2.7s', size: 'h-1 w-1' },
+];
+
+const AmbientStarfield = memo(function AmbientStarfield() {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+      {AMBIENT_STARS.map((star, idx) => (
+        <span
+          key={idx}
+          className={`lp-star ${star.size}`}
+          style={{
+            left: star.left,
+            top: star.top,
+            '--dur': star.dur,
+            '--delay': star.delay,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+});
+
+const HERO_STARS = [
+  { left: '84.182%', top: '8.850%', dur: '5.949s', delay: '0.101s' },
+  { left: '8.425%', top: '51.412%', dur: '5.516s', delay: '1.879s' },
+  { left: '21.101%', top: '22.892%', dur: '3.545s', delay: '1.894s' },
+  { left: '26.151%', top: '7.746%', dur: '4.636s', delay: '2.575s' },
+  { left: '89.217%', top: '3.141%', dur: '5.912s', delay: '1.773s' },
+  { left: '72%', top: '38%', dur: '4.2s', delay: '0.5s' },
+  { left: '91%', top: '42%', dur: '5.1s', delay: '1.2s' },
+  { left: '68%', top: '52%', dur: '3.8s', delay: '2.0s' },
+  { left: '86%', top: '58%', dur: '4.7s', delay: '0.9s' },
+  { left: '75%', top: '65%', dur: '5.6s', delay: '1.6s' },
+  { left: '92%', top: '70%', dur: '4.0s', delay: '2.4s' },
+  { left: '80%', top: '78%', dur: '6.0s', delay: '0.3s' },
+];
+
+const HeroStarfield = memo(function HeroStarfield() {
+  return (
+    <div className="lp-gpu pointer-events-none absolute inset-0 z-10">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {HERO_STARS.map((star, idx) => (
+          <span
+            key={idx}
+            className="lp-star h-1 w-1"
+            style={{ left: star.left, top: star.top, '--dur': star.dur, '--delay': star.delay } as React.CSSProperties}
+          />
+        ))}
+      </div>
+    </div>
+  );
+});
+
+// Self-contained, isolated Typewriter for Hero Role Badge
+// Prevents parent App from re-rendering on every letter typed/deleted
+function HeroRoleBadge({ defaultBadge }: { defaultBadge: string }) {
+  const [badgeText, setBadgeText] = useState('');
+  const [badgeRoleIndex, setBadgeRoleIndex] = useState(0);
+  const [badgeIsDeleting, setBadgeIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const roleBadgeTitles = [
+      defaultBadge || 'Software Engineer',
+      'Full-Stack Developer',
+      'Backend Systems Engineer',
+      'Mobile Application Developer',
+    ];
+    const current = roleBadgeTitles[badgeRoleIndex % roleBadgeTitles.length];
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (!badgeIsDeleting) {
+      if (badgeText.length < current.length) {
+        timeout = setTimeout(() => {
+          setBadgeText(current.slice(0, badgeText.length + 1));
+        }, 75);
+      } else {
+        timeout = setTimeout(() => {
+          setBadgeIsDeleting(true);
+        }, 2200);
+      }
+    } else {
+      if (badgeText.length > 0) {
+        timeout = setTimeout(() => {
+          setBadgeText(current.slice(0, badgeText.length - 1));
+        }, 35);
+      } else {
+        setBadgeIsDeleting(false);
+        setBadgeRoleIndex((prev) => prev + 1);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [badgeText, badgeIsDeleting, badgeRoleIndex, defaultBadge]);
+
+  return (
+    <div className="mb-4 inline-flex items-center rounded-full px-4 py-1.5 text-sm sm:text-[15px] font-semibold tracking-tight border transition-colors border-white/15 bg-white/5 text-white/95 backdrop-blur-md shadow-sm">
+      <span>{badgeText || defaultBadge}</span>
+      <span className="inline-block w-[2px] h-4 ml-1 bg-[#ffdb70] animate-pulse align-middle" />
+    </div>
+  );
+}
+
+// Self-contained Terminal Typewriter to prevent re-rendering the whole page every 35ms
+function TerminalTypewriter({ terminalText }: { terminalText: string }) {
+  const [typedText, setTypedText] = useState('');
+
+  useEffect(() => {
+    let index = 0;
+    setTypedText('');
+    const interval = setInterval(() => {
+      if (index <= terminalText.length) {
+        setTypedText(terminalText.slice(0, index));
+        index++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 35);
+    return () => clearInterval(interval);
+  }, [terminalText]);
+
+  return (
+    <p className="text-[#fafafa]">
+      <span className="text-[#ffdb70]">user@dev:~$</span> {typedText}
+      <span className="ml-1 inline-block h-3.5 w-1.5 animate-pulse bg-[#ffdb70] align-middle" />
+    </p>
+  );
+}
+
+// Self-contained Header with throttled RAF scroll detection
+// Isolates header glassmorphic transitions from re-rendering Hero & page content
+function PortfolioHeader({
+  name,
+  navigate,
+}: {
+  name: string;
+  navigate: (path: string) => void;
+}) {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 25);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <header className={`lp-gpu fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      isScrolled
+        ? 'py-3 bg-black/15 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.25)]'
+        : 'py-5 bg-transparent border-b border-transparent'
+    }`}>
+      <div className="relative flex min-w-0 items-center justify-between gap-3 mx-auto max-w-6xl px-3.5 sm:px-6">
+        
+        {/* Brand Logo */}
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <a
+            href="/"
+            onClick={(e) => { e.preventDefault(); navigate('/'); }}
+            className="group flex flex-shrink-0 items-center gap-2.5 opacity-90 transition-opacity duration-200 hover:opacity-100"
+          >
+            <div className="h-8 w-8 rounded-lg bg-[#ffdb70] text-[#121212] flex items-center justify-center font-bold text-xs shadow-xs">
+              {name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            </div>
+            <span className="lp-serif text-lg tracking-tight font-medium text-[#fafafa]">
+              {name} <span className="text-xs font-mono font-normal text-[#ffdb70]">.dev</span>
+            </span>
+          </a>
+        </div>
+
+        {/* Navigation & Actions */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {/* Desktop Navigation Capsule */}
+          <nav className={`hidden md:flex items-center space-x-1.5 rounded-full p-1.5 border transition-all duration-300 ${
+            isScrolled
+              ? 'border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.25)]'
+              : 'border-[#383838] bg-[#1e1e1f]/80 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]'
+          }`}>
+            <a href="#about" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">About</a>
+            <a href="#resume" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">Resume</a>
+            <button
+              onClick={() => navigate('/projects')}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5 cursor-pointer"
+            >
+              Portfolio
+            </button>
+            <a href="#ventures" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">Ventures</a>
+            <button
+              onClick={() => navigate('/modeling')}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5 cursor-pointer"
+            >
+              Modeling
+            </button>
+            <a href="#contact" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">Contact</a>
+          </nav>
+
+          {/* Action Button — Desktop */}
+          <a
+            href="#contact"
+            className="items-center gap-2 rounded-full px-4 sm:px-5 py-2 text-xs font-semibold transition-all shadow-sm hidden md:inline-flex bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_16px_rgba(255,219,112,0.3)]"
+          >
+            <span>Get in Touch</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl border border-[#383838] bg-[#1e1e1f]/90 text-[#fafafa] hover:text-[#ffdb70] transition-colors cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+      </div>
+
+      {/* Mobile Navigation Drawer with Smooth Fluid Animation */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="md:hidden mx-2.5 sm:mx-4 mt-2 rounded-2xl border border-[#383838]/80 bg-[#1e1e1f]/98 p-3 sm:p-4 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+          >
+            <div className="flex flex-col space-y-1">
+              <a
+                href="#about"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+              >
+                <span>About</span>
+              </a>
+              <a
+                href="#resume"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+              >
+                <span>Resume</span>
+              </a>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate('/projects');
+                }}
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
+              >
+                <span>Portfolio</span>
+                <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
+              </button>
+              <a
+                href="#ventures"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+              >
+                <span>Ventures & Entrepreneurship</span>
+              </a>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate('/modeling');
+                }}
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
+              >
+                <span>Modeling & Campaigns</span>
+                <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
+              </button>
+              <a
+                href="#contact"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
+              >
+                <span>Contact</span>
+              </a>
+              <div className="pt-2 border-t border-[#383838]">
+                <a
+                  href="#contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] shadow-sm hover:brightness-105 transition-all"
+                >
+                  <span>Get in Touch</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState<PortfolioData>(PortfolioStore.getLocal());
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<'home' | 'projects' | 'modeling' | 'admin'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Initialize Lenis smooth scroll — Desktop Only, snappy & responsive (No floaty inertia)
+  // Desktop vs Mobile detection for parallax & Lenis smooth scroll
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.innerWidth >= 1024 &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+      !('ontouchstart' in window)
+    );
+  });
+
   useEffect(() => {
-    const isMobile = window.innerWidth < 1024 || 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
-    if (isMobile) return;
+    const handleResize = () => {
+      const desktop =
+        window.innerWidth >= 1024 &&
+        window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+        !('ontouchstart' in window);
+      setIsDesktop(desktop);
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Initialize Lenis smooth scroll — STRICTLY Desktop Only (pointer: fine, width >= 1024, no touch)
+  useEffect(() => {
+    const isTouchOrMobile =
+      window.innerWidth < 1024 ||
+      !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+      'ontouchstart' in window ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+
+    if (isTouchOrMobile) {
+      // Ensure Lenis classes are strictly absent so mobile native touch momentum scroll runs unhindered
+      document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-stopped');
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      document.documentElement.classList.remove('lenis', 'lenis-smooth');
+      return;
+    }
+
+    // Low-end desktop detection (4 or fewer CPU cores)
+    const isLowEndDesktop = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false;
 
     const lenis = new Lenis({
-      duration: 0.65,
+      duration: isLowEndDesktop ? 0.45 : 0.65,
       easing: (t) => 1 - Math.pow(1 - t, 3),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1.0,
+      touchMultiplier: 0, // Never hijack touch on dual-input laptops
+      infinite: false,
     });
 
+    let rafId: number;
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    const rafId = requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
+      document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-stopped');
     };
-  }, []);
-
-  // Track scroll position for transparent navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 25);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Enforce pure dark theme permanently (no white mode)
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
-
-  // Typewriter effect state for terminal mockup
-  const [typedText, setTypedText] = useState('');
 
   // Subscribe to live Cloudflare D1 data
   useEffect(() => {
@@ -124,62 +489,7 @@ export default function App() {
     };
   }, []);
 
-  // Typewriter effect
-  useEffect(() => {
-    const fullText = data.terminalText;
-    let index = 0;
-    setTypedText('');
-    const interval = setInterval(() => {
-      if (index <= fullText.length) {
-        setTypedText(fullText.slice(0, index));
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 35);
-    return () => clearInterval(interval);
-  }, [data.terminalText]);
-
-  // Continuous looping typewriter for the hero role badge
-  const [badgeText, setBadgeText] = useState('');
-  const [badgeRoleIndex, setBadgeRoleIndex] = useState(0);
-  const [badgeIsDeleting, setBadgeIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const roleBadgeTitles = [
-      data.heroStatusBadge || 'Software Engineer',
-      'Full-Stack Developer',
-      'Backend Systems Engineer',
-      'Mobile Application Developer',
-    ];
-    const current = roleBadgeTitles[badgeRoleIndex % roleBadgeTitles.length];
-    let timeout: ReturnType<typeof setTimeout>;
-
-    if (!badgeIsDeleting) {
-      if (badgeText.length < current.length) {
-        timeout = setTimeout(() => {
-          setBadgeText(current.slice(0, badgeText.length + 1));
-        }, 75);
-      } else {
-        timeout = setTimeout(() => {
-          setBadgeIsDeleting(true);
-        }, 2200);
-      }
-    } else {
-      if (badgeText.length > 0) {
-        timeout = setTimeout(() => {
-          setBadgeText(current.slice(0, badgeText.length - 1));
-        }, 35);
-      } else {
-        setBadgeIsDeleting(false);
-        setBadgeRoleIndex((prev) => prev + 1);
-      }
-    }
-
-    return () => clearTimeout(timeout);
-  }, [badgeText, badgeIsDeleting, badgeRoleIndex, data.heroStatusBadge]);
-
-  // Scroll animations setup
+  // Scroll animations setup: Desktop parallax transforms
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 600], [0, -40]);
   const skyY = useTransform(scrollY, [0, 1000], [0, 150]);
@@ -214,200 +524,10 @@ export default function App() {
     <div className="dark bg-[#03060a] text-[#d6d6d6] relative min-h-screen font-sans transition-colors duration-300 overflow-x-hidden">
       
       {/* High-Resolution Ambient Starfield across website (GPU Hardware Accelerated, Zero Lag) */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-        {[
-          { left: '5%', top: '8%', dur: '4.2s', delay: '0.2s', size: 'h-1 w-1' },
-          { left: '14%', top: '18%', dur: '3.6s', delay: '1.1s', size: 'h-1.5 w-1.5' },
-          { left: '22%', top: '10%', dur: '5.1s', delay: '2.3s', size: 'h-1 w-1' },
-          { left: '31%', top: '24%', dur: '4.0s', delay: '0.7s', size: 'h-1.5 w-1.5' },
-          { left: '42%', top: '12%', dur: '6.2s', delay: '1.8s', size: 'h-1 w-1' },
-          { left: '56%', top: '20%', dur: '3.8s', delay: '0.4s', size: 'h-1.5 w-1.5' },
-          { left: '68%', top: '9%', dur: '5.5s', delay: '2.6s', size: 'h-1 w-1' },
-          { left: '78%', top: '26%', dur: '4.4s', delay: '1.2s', size: 'h-1.5 w-1.5' },
-          { left: '88%', top: '14%', dur: '5.9s', delay: '0.9s', size: 'h-1 w-1' },
-          { left: '95%', top: '22%', dur: '3.5s', delay: '2.0s', size: 'h-1.5 w-1.5' },
-          
-          { left: '8%', top: '38%', dur: '4.7s', delay: '1.4s', size: 'h-1 w-1' },
-          { left: '19%', top: '48%', dur: '5.8s', delay: '0.5s', size: 'h-1.5 w-1.5' },
-          { left: '33%', top: '42%', dur: '3.9s', delay: '2.2s', size: 'h-1 w-1' },
-          { left: '48%', top: '52%', dur: '6.0s', delay: '1.6s', size: 'h-1.5 w-1.5' },
-          { left: '62%', top: '44%', dur: '4.3s', delay: '0.8s', size: 'h-1 w-1' },
-          { left: '74%', top: '56%', dur: '5.2s', delay: '2.5s', size: 'h-1.5 w-1.5' },
-          { left: '86%', top: '46%', dur: '3.7s', delay: '1.0s', size: 'h-1 w-1' },
-          { left: '94%', top: '40%', dur: '5.3s', delay: '1.9s', size: 'h-1.5 w-1.5' },
-          
-          { left: '11%', top: '68%', dur: '5.4s', delay: '2.1s', size: 'h-1 w-1' },
-          { left: '26%', top: '78%', dur: '4.1s', delay: '0.6s', size: 'h-1.5 w-1.5' },
-          { left: '40%', top: '72%', dur: '6.3s', delay: '1.7s', size: 'h-1 w-1' },
-          { left: '54%', top: '82%', dur: '3.6s', delay: '2.4s', size: 'h-1.5 w-1.5' },
-          { left: '70%', top: '74%', dur: '5.0s', delay: '0.9s', size: 'h-1 w-1' },
-          { left: '84%', top: '84%', dur: '4.5s', delay: '1.5s', size: 'h-1.5 w-1.5' },
-          { left: '92%', top: '76%', dur: '5.7s', delay: '2.8s', size: 'h-1 w-1' },
-
-          { left: '6%', top: '90%', dur: '4.8s', delay: '1.3s', size: 'h-1 w-1' },
-          { left: '22%', top: '93%', dur: '5.6s', delay: '2.2s', size: 'h-1.5 w-1.5' },
-          { left: '47%', top: '91%', dur: '4.1s', delay: '0.4s', size: 'h-1 w-1' },
-          { left: '65%', top: '94%', dur: '6.2s', delay: '1.8s', size: 'h-1.5 w-1.5' },
-          { left: '88%', top: '92%', dur: '5.0s', delay: '2.7s', size: 'h-1 w-1' },
-        ].map((star, idx) => (
-          <span
-            key={idx}
-            className={`lp-star ${star.size}`}
-            style={{
-              left: star.left,
-              top: star.top,
-              '--dur': star.dur,
-              '--delay': star.delay,
-            } as React.CSSProperties}
-          />
-        ))}
-      </div>
+      <AmbientStarfield />
 
       {/* Dynamic Header — Transparent with Glassmorphic Blur on Scroll */}
-      <header className={`lp-gpu fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'py-3 bg-black/15 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.25)]'
-          : 'py-5 bg-transparent border-b border-transparent'
-      }`}>
-        <div className="relative flex min-w-0 items-center justify-between gap-3 mx-auto max-w-6xl px-3.5 sm:px-6">
-          
-          {/* Brand Logo — Perfectly aligns with left page content */}
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <a
-              href="/"
-              onClick={(e) => { e.preventDefault(); navigate('/'); }}
-              className="group flex flex-shrink-0 items-center gap-2.5 opacity-90 transition-opacity duration-200 hover:opacity-100"
-            >
-              <div className="h-8 w-8 rounded-lg bg-[#ffdb70] text-[#121212] flex items-center justify-center font-bold text-xs shadow-xs">
-                {data.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
-              <span className="lp-serif text-lg tracking-tight font-medium text-[#fafafa]">
-                {data.name} <span className="text-xs font-mono font-normal text-[#ffdb70]">.dev</span>
-              </span>
-            </a>
-          </div>
-
-          {/* Navigation & Actions */}
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {/* Desktop Navigation Capsule */}
-            <nav className={`hidden md:flex items-center space-x-1.5 rounded-full p-1.5 border transition-all duration-300 ${
-              isScrolled
-                ? 'border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.25)]'
-                : 'border-[#383838] bg-[#1e1e1f]/80 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]'
-            }`}>
-              <a href="#about" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">About</a>
-              <a href="#resume" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">Resume</a>
-              <button
-                onClick={() => navigate('/projects')}
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5 cursor-pointer"
-              >
-                Portfolio
-              </button>
-              <a href="#ventures" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">Ventures</a>
-              <button
-                onClick={() => navigate('/modeling')}
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5 cursor-pointer"
-              >
-                Modeling
-              </button>
-              <a href="#contact" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors text-[#d6d6d6] hover:text-[#ffdb70] hover:bg-white/5">Contact</a>
-            </nav>
-
-            {/* Action Button — Desktop */}
-            <a
-              href="#contact"
-              className="items-center gap-2 rounded-full px-4 sm:px-5 py-2 text-xs font-semibold transition-all shadow-sm hidden md:inline-flex bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] hover:shadow-[0_4px_16px_rgba(255,219,112,0.3)]"
-            >
-              <span>Get in Touch</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-
-            {/* Mobile Hamburger Toggle — Prevents any element collision or overlay */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl border border-[#383838] bg-[#1e1e1f]/90 text-[#fafafa] hover:text-[#ffdb70] transition-colors cursor-pointer"
-              aria-label="Toggle navigation menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-
-        </div>
-
-        {/* Mobile Navigation Drawer with Smooth Fluid Animation */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.97 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="md:hidden mx-2.5 sm:mx-4 mt-2 rounded-2xl border border-[#383838]/80 bg-[#1e1e1f]/98 p-3 sm:p-4 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
-            >
-              <div className="flex flex-col space-y-1">
-                <a
-                  href="#about"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-                >
-                  <span>About</span>
-                </a>
-                <a
-                  href="#resume"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-                >
-                  <span>Resume</span>
-                </a>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate('/projects');
-                  }}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
-                >
-                  <span>Portfolio</span>
-                  <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
-                </button>
-                <a
-                  href="#ventures"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-                >
-                  <span>Ventures & Entrepreneurship</span>
-                </a>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate('/modeling');
-                  }}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-left text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors cursor-pointer"
-                >
-                  <span>Modeling & Campaigns</span>
-                  <ArrowRight className="w-4 h-4 text-[#ffdb70]" />
-                </button>
-                <a
-                  href="#contact"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#fafafa] hover:bg-white/5 hover:text-[#ffdb70] transition-colors"
-                >
-                  <span>Contact</span>
-                </a>
-                <div className="pt-2 border-t border-[#383838]">
-                  <a
-                    href="#contact"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold bg-gradient-to-r from-[#ffdb70] to-[#ceb15a] text-[#121212] shadow-sm hover:brightness-105 transition-all"
-                  >
-                    <span>Get in Touch</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+      <PortfolioHeader name={data.name} navigate={navigate} />
 
       {/* ═══════════════════════════════════════════════════════════════
           HERO SECTION — parallax layers & animations PRESERVED exactly
@@ -418,36 +538,12 @@ export default function App() {
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,#03060a_0%,#060c12_24%,#0c1417_44%,#091317_57%,#060e12_71%,#03060a_86%,#03060a_100%)] transition-colors"></div>
 
         {/* Animated Stars — Enhanced with stars around developer photo card */}
-        <div className="lp-gpu pointer-events-none absolute inset-0 z-10">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            {[
-              { left: '84.182%', top: '8.850%', dur: '5.949s', delay: '0.101s' },
-              { left: '8.425%', top: '51.412%', dur: '5.516s', delay: '1.879s' },
-              { left: '21.101%', top: '22.892%', dur: '3.545s', delay: '1.894s' },
-              { left: '26.151%', top: '7.746%', dur: '4.636s', delay: '2.575s' },
-              { left: '89.217%', top: '3.141%', dur: '5.912s', delay: '1.773s' },
-              // Stars directly around and under the photo area (right side)
-              { left: '72%', top: '38%', dur: '4.2s', delay: '0.5s' },
-              { left: '91%', top: '42%', dur: '5.1s', delay: '1.2s' },
-              { left: '68%', top: '52%', dur: '3.8s', delay: '2.0s' },
-              { left: '86%', top: '58%', dur: '4.7s', delay: '0.9s' },
-              { left: '75%', top: '65%', dur: '5.6s', delay: '1.6s' },
-              { left: '92%', top: '70%', dur: '4.0s', delay: '2.4s' },
-              { left: '80%', top: '78%', dur: '6.0s', delay: '0.3s' },
-            ].map((star, idx) => (
-              <span
-                key={idx}
-                className="lp-star h-1 w-1"
-                style={{ left: star.left, top: star.top, '--dur': star.dur, '--delay': star.delay } as React.CSSProperties}
-              />
-            ))}
-          </div>
-        </div>
+        <HeroStarfield />
 
         {/* Hero Layout: Left Side Profile, Right Side Photo — Raised slightly for balanced spacing */}
         <div id="about" className="relative z-30 mx-auto flex max-w-6xl flex-col items-center px-3.5 sm:px-6 pt-28 sm:pt-36 pb-3 sm:pb-8 text-left md:pt-38">
           <motion.div
-            style={{ y: heroY }}
+            style={{ y: isDesktop ? heroY : 0 }}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -456,10 +552,7 @@ export default function App() {
             {/* Left Side: Name & Bio */}
             <div className="flex flex-col items-start text-left md:col-span-7">
               {/* Continuous Looping Typewriter Badge — Larger, prominent, NO extra dots */}
-              <div className="mb-4 inline-flex items-center rounded-full px-4 py-1.5 text-sm sm:text-[15px] font-semibold tracking-tight border transition-colors border-white/15 bg-white/5 text-white/95 backdrop-blur-md shadow-sm">
-                <span>{badgeText || data.heroStatusBadge}</span>
-                <span className="inline-block w-[2px] h-4 ml-1 bg-[#ffdb70] animate-pulse align-middle" />
-              </div>
+              <HeroRoleBadge defaultBadge={data.heroStatusBadge} />
 
               {/* Bespoke Word-by-Word Reveal Animation */}
               <motion.h1
@@ -481,13 +574,12 @@ export default function App() {
                   <motion.span
                     key={wIdx}
                     variants={{
-                      hidden: { opacity: 0, y: 24, filter: 'blur(4px)' },
+                      hidden: { opacity: 0, y: 18 },
                       visible: {
                         opacity: 1,
                         y: 0,
-                        filter: 'blur(0px)',
                         transition: {
-                          duration: 0.6,
+                          duration: 0.55,
                           ease: [0.16, 1, 0.3, 1],
                         },
                       },
@@ -640,7 +732,7 @@ export default function App() {
           
           {/* Layer 0: Sky Background */}
           <motion.img
-            style={{ y: skyY }}
+            style={{ y: isDesktop ? skyY : 0 }}
             src="/sky-bg.webp"
             alt=""
             aria-hidden="true"
@@ -649,7 +741,7 @@ export default function App() {
 
           {/* Layer 1: Hills Background */}
           <motion.img
-            style={{ y: hillsY }}
+            style={{ y: isDesktop ? hillsY : 0 }}
             src="/hills-bg.webp"
             alt=""
             aria-hidden="true"
@@ -694,7 +786,7 @@ export default function App() {
 
           {/* Layer 3: Foreground Bushes — PRESERVED EXACTLY */}
           <motion.div
-            style={{ y: bushesY }}
+            style={{ y: isDesktop ? bushesY : 0 }}
             className="lp-gpu pointer-events-none absolute inset-x-0 bottom-0 z-20"
           >
             <img
@@ -762,10 +854,7 @@ export default function App() {
                         <span className="text-[#ffdb70]">● connected</span>
                         <span>{data.name} · main branch</span>
                       </div>
-                      <p className="text-[#fafafa]">
-                        <span className="text-[#ffdb70]">user@dev:~$</span> {typedText}
-                        <span className="ml-1 inline-block h-3.5 w-1.5 animate-pulse bg-[#ffdb70] align-middle" />
-                      </p>
+                      <TerminalTypewriter terminalText={data.terminalText} />
                     </div>
                   </div>
                 </motion.div>
