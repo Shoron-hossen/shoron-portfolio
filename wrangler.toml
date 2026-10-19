@@ -12,3 +12,7 @@ database_id = "e88f189b-8f3f-435f-9203-1875d67eb47c"
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
 bucket_name = "shoron-portfolio-media"
+
+# Cloudflare Workers AI (Zero-key edge AI)
+[ai]
+binding = "AI"

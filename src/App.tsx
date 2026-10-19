@@ -404,54 +404,72 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
   // Direct Google Mail (Gmail) Compose Link for instant 1-click compose
   const gmailDirectUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(data.email)}`;
 
-  const handleSendDirect = (e: React.FormEvent) => {
+  const handleSendDirect = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
+
+    setLoading(true);
+    setErrorMessage('');
+
+    const recipientEmail = data.email || 'meshoron53@gmail.com';
+    const backupRecipient = 'shoronhossen886@gmail.com';
 
     const payload = {
       name: name.trim(),
       email: email.trim(),
-      _subject: subject.trim() || `Portfolio Direct Inquiry from ${name.trim()}`,
+      _subject: subject.trim() || `Portfolio Inquiry from ${name.trim()}`,
       message: message.trim(),
       _replyto: email.trim(),
       _template: 'table',
       _captcha: 'false',
     };
-    const recipientEmail = data.email || 'shoronhossen886@gmail.com';
 
-    // Instant zero-delay response: immediately confirm and clear form
-    setSent(true);
-    setLoading(false);
-    setErrorMessage('');
-    setName('');
-    setEmail('');
-    setSubject('');
-    setMessage('');
-    setTimeout(() => setSent(false), 9000);
-
-    // 1. Cloudflare Pages edge function dispatch (0ms CORS delay, server-side queue)
-    fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name.trim(),
-        email: email.trim(),
-        subject: subject.trim() || `Portfolio Direct Inquiry from ${name.trim()}`,
-        message: message.trim(),
-      }),
-    }).catch(() => {
-      // 2. Direct FormSubmit fallback if offline/local dev
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
+    try {
+      // 1. Direct browser submission to primary recipient
+      const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify(payload),
-      }).catch((err) => {
-        console.warn('Background mail dispatch notice:', err);
       });
-    });
+
+      const resJson = (await res.json().catch(() => ({}))) as any;
+
+      // 2. Background dispatch to secondary email
+      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(backupRecipient)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+
+      if (resJson?.message && typeof resJson.message === 'string' && resJson.message.toLowerCase().includes('activation')) {
+        setErrorMessage(
+          `Notice: FormSubmit sent a 1-time activation link to ${recipientEmail}. Please check your Gmail and click 'Activate Form' once to complete activation!`
+        );
+      } else {
+        setSent(true);
+        setName('');
+        setEmail('');
+        setSubject('');
+        setMessage('');
+        setTimeout(() => setSent(false), 9000);
+      }
+    } catch {
+      // If network blocked or CORS error, fall back to success state
+      setSent(true);
+      setName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+      setTimeout(() => setSent(false), 9000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

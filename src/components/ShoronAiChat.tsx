@@ -39,11 +39,7 @@ Rules:
 ${data.aiSystemPrompt ? `\nNote: ${data.aiSystemPrompt}` : ''}`;
 }
 
-// Ultra-fast working model cache
-let cachedEndpoint = '';
-try {
-  cachedEndpoint = localStorage.getItem('shoron_active_gemini_endpoint') || '';
-} catch {}
+
 
 interface FastModelCandidate {
   apiVersion: 'v1' | 'v1beta';
@@ -97,26 +93,51 @@ async function executeSingleModelWithTimeout(
   }
 }
 
-// Instant intelligent persona engine for 0-latency responses (<50ms)
+// Instant intelligent persona engine with wide range of natural intents
 export function generateInstantPersonaReply(query: string, data: PortfolioData): string {
   const q = query.toLowerCase().trim();
 
-  // Tech stack & skills
+  // Greetings & casual opening
   if (
-    q.includes('stack') ||
-    q.includes('skill') ||
-    q.includes('tech') ||
-    q.includes('language') ||
-    q.includes('framework') ||
-    q.includes('flutter') ||
-    q.includes('react') ||
-    q.includes('backend') ||
-    q.includes('frontend')
+    /^(hi|hello|hey|yo|greetings|hola|salaam|assalamu|good\s*(morning|afternoon|evening))/i.test(q) ||
+    q === 'hi' ||
+    q === 'hello' ||
+    q === 'hey'
   ) {
+    const greetings = [
+      `Hello! 👋 Great to connect with you. I'm Shoron Hossen. How can I help you today? Feel free to ask about my mobile apps, backend systems, or engineering background.`,
+      `Hi there! Thanks for stopping by my portfolio. I'm Shoron — whether you're looking for a developer, exploring my projects, or just want to chat tech, I'm here!`,
+      `Hey! Welcome to my site. I build cross-platform mobile apps with Flutter and backend services with Spring Boot. What are you looking to collaborate on?`,
+    ];
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  }
+
+  // How are you / status
+  if (q.includes('how are you') || q.includes('how r u') || q.includes('whats up') || q.includes("what's up")) {
+    return `I'm doing great, thank you for asking! Active and building scalable software. Are you working on a project, or looking to hire a developer?`;
+  }
+
+  // Mobile App Development
+  if (q.includes('mobile') || q.includes('flutter') || q.includes('android') || q.includes('ios') || q.includes('dart') || q.includes('app')) {
+    return `Mobile application development is one of my strongest specialties! I architect production-ready, cross-platform apps using **Flutter & Dart** with clean state management, offline-first SQLite/Hive databases, and seamless RESTful backend integration. Have an app concept in mind? Let's discuss on WhatsApp: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'}).`;
+  }
+
+  // Backend & APIs & Databases
+  if (q.includes('backend') || q.includes('spring') || q.includes('java') || q.includes('server') || q.includes('database') || q.includes('sql') || q.includes('mysql') || q.includes('mongodb') || q.includes('fastapi')) {
+    return `On the backend, I engineer resilient, high-throughput architectures using **Java & Spring Boot** and **Python & FastAPI**. I design structured database schemas in MySQL, MongoDB, and Cloudflare D1 with secure JWT authentication and optimized API queries.`;
+  }
+
+  // Web & Frontend
+  if (q.includes('web') || q.includes('react') || q.includes('frontend') || q.includes('typescript') || q.includes('html') || q.includes('css') || q.includes('tailwind')) {
+    return `For web engineering, I build responsive, accessible web applications using **React, TypeScript, and Tailwind CSS** with Vite. I focus on clean UI architectures, sub-second load times, and smooth user interactions.`;
+  }
+
+  // Tech stack & skills
+  if (q.includes('stack') || q.includes('skill') || q.includes('tech') || q.includes('language') || q.includes('framework')) {
     const skills = (data.skillCategories || [])
       .map((c) => `• **${c.category}**: ${c.skills.slice(0, 5).join(', ')}`)
       .join('\n');
-    return `My core engineering stack focuses on mobile and full-stack software development:\n\n${skills}\n\nI build fast, cross-platform apps with Flutter & Dart, enterprise services with Java & Spring Boot, and modern web apps with React & TypeScript.`;
+    return `Here is my complete technical engineering stack:\n\n${skills}\n\nI specialize in Flutter & Dart for cross-platform mobile, Java & Spring Boot for enterprise backends, and React with TypeScript on the web.`;
   }
 
   // Hiring, contracts & availability
@@ -129,136 +150,117 @@ export function generateInstantPersonaReply(query: string, data: PortfolioData):
     q.includes('work') ||
     q.includes('freelance') ||
     q.includes('salary') ||
-    q.includes('rate')
+    q.includes('rate') ||
+    q.includes('cost') ||
+    q.includes('price')
   ) {
-    return `Yes! I am actively available for full-time software engineering roles, mobile/web contract projects, and remote collaboration.\n\nFeel free to reach out directly to discuss opportunities:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})`;
+    return `Yes! I am actively available for full-time engineering roles, freelance contracts, and software consulting.\n\nLet's discuss terms and timelines directly:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})\n• **Location**: ${data.location}`;
   }
 
   // Projects & portfolio
-  if (
-    q.includes('project') ||
-    q.includes('portfolio') ||
-    q.includes('built') ||
-    q.includes('app') ||
-    q.includes('github')
-  ) {
+  if (q.includes('project') || q.includes('portfolio') || q.includes('built') || q.includes('github') || q.includes('showcase')) {
     const topProjects = (data.projects || [])
-      .slice(0, 3)
-      .map((p) => `• **${p.title}** (${p.category}): ${p.subtitle || p.description?.slice(0, 80) + '...'}`)
+      .slice(0, 4)
+      .map((p) => `• **${p.title}** (${p.category}): ${p.subtitle || p.description?.slice(0, 75) + '...'}`)
       .join('\n');
-    return `Here are some of my featured engineering projects:\n\n${topProjects}\n\nYou can explore live demos and source code directly in the **Projects** section on this page or visit my [GitHub](https://github.com/Shoron-hossen).`;
+    return `Here are some of my featured engineering builds:\n\n${topProjects}\n\nYou can review live source code on my [GitHub](https://github.com/Shoron-hossen) or browse the **Projects** section on this website!`;
   }
 
-  // Education & background
-  if (
-    q.includes('education') ||
-    q.includes('study') ||
-    q.includes('university') ||
-    q.includes('degree') ||
-    q.includes('school') ||
-    q.includes('college') ||
-    q.includes('student') ||
-    q.includes('bsc') ||
-    q.includes('cse')
-  ) {
+  // Education & University
+  if (q.includes('education') || q.includes('study') || q.includes('university') || q.includes('degree') || q.includes('school') || q.includes('student') || q.includes('bsc') || q.includes('cse')) {
     const edu = data.educations?.[0];
-    return `I am currently pursuing a **${edu?.title || 'B.Sc. in Computer Science and Engineering'}** at **${edu?.institution || 'Green University of Bangladesh, Dhaka'}** (${edu?.period || '2022 — Present'}), with an active focus on scalable mobile architectures, backend services, and AI integrations.`;
+    return `I am currently pursuing a **${edu?.title || 'B.Sc. in Computer Science and Engineering'}** at **${edu?.institution || 'Green University of Bangladesh'}** (${edu?.period || '2022 — Present'}), with an active focus on backend architectures, mobile systems, and AI integrations.`;
+  }
+
+  // Location / address / where
+  if (q.includes('location') || q.includes('where') || q.includes('city') || q.includes('country') || q.includes('dhaka') || q.includes('bangladesh') || q.includes('address')) {
+    return `I am based in **${data.location || 'Dhaka, Bangladesh'}**, and I work seamlessly with worldwide remote teams across different time zones.`;
   }
 
   // Contact / phone / email
-  if (
-    q.includes('contact') ||
-    q.includes('email') ||
-    q.includes('phone') ||
-    q.includes('whatsapp') ||
-    q.includes('message') ||
-    q.includes('reach')
-  ) {
-    return `You can reach me directly through any of the following channels:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})\n• **LinkedIn**: [Profile](${data.socials?.linkedin || 'https://linkedin.com/in/shoron-hossen'})`;
+  if (q.includes('contact') || q.includes('email') || q.includes('phone') || q.includes('whatsapp') || q.includes('message') || q.includes('reach') || q.includes('call')) {
+    return `You can reach me directly anytime:\n• **WhatsApp**: [${data.phone || '01888668396'}](https://wa.me/88${data.phone || '01888668396'})\n• **Email**: [${data.email}](mailto:${data.email})\n• **LinkedIn**: [Profile](${data.socials?.linkedin || 'https://linkedin.com/in/shoron-hossen'})`;
   }
 
   // Ventures / fashion / modeling
-  if (
-    q.includes('modeling') ||
-    q.includes('fashion') ||
-    q.includes('venture') ||
-    q.includes('asora') ||
-    q.includes('lehja') ||
-    q.includes('brand')
-  ) {
-    return `Alongside my software engineering work, I am an entrepreneur and editorial model. I have founded brands including **ASORA CLOTHING** and **Lehja**, and engaged in high-fashion editorial runways and campaigns. You can check out my dedicated Modeling page for visual showcases!`;
+  if (q.includes('modeling') || q.includes('fashion') || q.includes('venture') || q.includes('asora') || q.includes('lehja') || q.includes('brand')) {
+    return `Alongside software engineering, I am the founder of ventures including **ASORA CLOTHING** and **Lehja**, and I have worked in professional fashion and commercial editorial modeling. Feel free to check out the Modeling tab on this site for photo showcases!`;
   }
 
-  // About / Bio / Introduction
-  return `Hi! I'm **${data.name}**, a ${data.role || 'Full-Stack & Mobile Developer'} based in Dhaka, Bangladesh. ${data.bio}\n\nFeel free to ask about my projects, technical stack, or contact me directly on WhatsApp at **${data.phone || '01888668396'}**!`;
+  // Experience / CV / resume
+  if (q.includes('experience') || q.includes('cv') || q.includes('resume') || q.includes('history')) {
+    return `I have hands-on experience building full-stack products from concept to deployment. You can download my complete CV by clicking the **Download CV** button on the page, or ask me about any specific technical domain!`;
+  }
+
+  // Dynamic context-aware fallback
+  return `Thanks for reaching out! Regarding "${query.slice(0, 50)}", I'd be glad to discuss details with you. I specialize in Flutter mobile apps, Java/Spring Boot backends, and full-stack solutions. You can also message me directly on WhatsApp at **${data.phone || '01888668396'}** or email **${data.email}**!`;
 }
 
-// Ultra-fast Gemini dispatcher with parallel race, 2.5s cap, and instant fallback
-async function callGeminiApi(
+// Multi-tier AI dispatcher: Cloudflare Edge Workers AI + Gemini API race
+async function callAiChatService(
   apiKey: string,
   contents: Array<{ role: string; parts: Array<{ text: string }> }>,
   systemPrompt: string,
   userQuery: string,
   data: PortfolioData
 ): Promise<string> {
-  const fullContents = [
-    {
-      role: 'user',
-      parts: [{ text: `[System Instructions]: ${systemPrompt}\n\nAcknowledge.` }],
-    },
-    {
-      role: 'model',
-      parts: [{ text: `Understood! I will reply concisely as Shoron Hossen.` }],
-    },
-    ...contents,
-  ];
+  // Tier 1: Try Cloudflare Edge Chat Endpoint (/api/chat)
+  try {
+    const edgeRes = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: contents.map((c) => ({
+          role: c.role === 'model' ? 'assistant' : 'user',
+          content: c.parts?.[0]?.text || '',
+        })),
+        systemPrompt,
+        geminiApiKey: apiKey || undefined,
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
 
-  const payload = {
-    contents: fullContents,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 250,
-    },
-  };
-
-  // 1. FAST PATH: If cached working endpoint is known, call directly with 2.5s timeout
-  if (cachedEndpoint) {
-    const [apiVersion, model] = cachedEndpoint.split('/') as ['v1' | 'v1beta', string];
-    if (apiVersion && model) {
-      try {
-        const result = await executeSingleModelWithTimeout(
-          { apiVersion, model },
-          apiKey,
-          payload,
-          2500
-        );
-        return result.text;
-      } catch {
-        cachedEndpoint = '';
-        try {
-          localStorage.removeItem('shoron_active_gemini_endpoint');
-        } catch {}
+    if (edgeRes.ok) {
+      const edgeJson = (await edgeRes.json()) as any;
+      if (edgeJson?.success && edgeJson?.reply) {
+        return edgeJson.reply;
       }
+    }
+  } catch {
+    // Edge endpoint skipped / offline
+  }
+
+  // Tier 2: If Gemini API key is configured, race fast models directly from client
+  if (apiKey) {
+    const fullContents = [
+      {
+        role: 'user',
+        parts: [{ text: `[System Instructions]: ${systemPrompt}\n\nAcknowledge.` }],
+      },
+      {
+        role: 'model',
+        parts: [{ text: `Understood! I will reply concisely as Shoron Hossen.` }],
+      },
+      ...contents,
+    ];
+
+    const payload = {
+      contents: fullContents,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 250 },
+    };
+
+    try {
+      const winner = await Promise.any(
+        FAST_CANDIDATES.map((c) => executeSingleModelWithTimeout(c, apiKey, payload, 2500))
+      );
+      return winner.text;
+    } catch {
+      // Fallback to local persona generator
     }
   }
 
-  // 2. CONCURRENT PARALLEL RACE: All candidate flash models race simultaneously
-  // Capped at 2.5 seconds maximum so the user NEVER waits 10-20 seconds!
-  try {
-    const winner = await Promise.any(
-      FAST_CANDIDATES.map((candidate) =>
-        executeSingleModelWithTimeout(candidate, apiKey, payload, 2500)
-      )
-    );
-    cachedEndpoint = winner.endpointKey;
-    try {
-      localStorage.setItem('shoron_active_gemini_endpoint', winner.endpointKey);
-    } catch {}
-    return winner.text;
-  } catch {
-    // If external Gemini API is unreachable or times out, immediately use the Instant Persona Engine
-    return generateInstantPersonaReply(userQuery, data);
-  }
+  // Tier 3: Instant dynamic persona generator (<10ms, multi-intent, varied replies)
+  return generateInstantPersonaReply(userQuery, data);
 }
 
 interface ShoronAiChatProps {
@@ -309,24 +311,6 @@ export default function ShoronAiChat({ data }: ShoronAiChatProps) {
     setInput('');
     setLoading(true);
 
-    if (!apiKey) {
-      // Instant response using local persona intelligence
-      setTimeout(() => {
-        const instantReply = generateInstantPersonaReply(messageText, data);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `a-${Date.now()}`,
-            role: 'assistant',
-            content: instantReply,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-        setLoading(false);
-      }, 300);
-      return;
-    }
-
     try {
       const systemPrompt = buildShoronPersonaPrompt(data);
 
@@ -338,7 +322,7 @@ export default function ShoronAiChat({ data }: ShoronAiChatProps) {
           parts: [{ text: m.content }],
         }));
 
-      const replyText = await callGeminiApi(apiKey, contents, systemPrompt, messageText, data);
+      const replyText = await callAiChatService(apiKey, contents, systemPrompt, messageText, data);
 
       setMessages((prev) => [
         ...prev,
