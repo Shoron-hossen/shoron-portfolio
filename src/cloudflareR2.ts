@@ -108,6 +108,12 @@ export class CloudflareR2 {
       throw new Error(data.error || 'Failed to retrieve uploaded image URL');
     }
 
+    // If custom publicUrl is configured in Settings, use it
+    if (config.publicUrl && data.key) {
+      const publicBase = config.publicUrl.replace(/\/$/, '');
+      return `${publicBase}/${data.key}`;
+    }
+
     return data.url;
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ShieldCheck,
   Plus,
@@ -30,6 +30,7 @@ import {
 import { PortfolioStore, DEFAULT_PORTFOLIO_DATA, type PortfolioData } from './portfolioStore';
 import { CloudflareR2, type R2Config } from './cloudflareR2';
 import GithubIcon from './components/GithubIcon';
+import MediaUploadField from './components/MediaUploadField';
 
 interface AdminPageProps {
   onBackHome?: () => void;
@@ -93,7 +94,6 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   // R2 Config
   const [r2Config, setR2Config] = useState<R2Config>(CloudflareR2.getConfig());
@@ -107,10 +107,6 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
   const [pImage, setPImage] = useState('');
   const [pLive, setPLive] = useState('');
   const [pGithub, setPGithub] = useState('');
-
-  // Image upload ref
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const projectFileInputRef = useRef<HTMLInputElement>(null);
 
   // Editing project ID
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
@@ -182,23 +178,6 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
     }
   };
 
-  // Upload image to Cloudflare R2
-  const handleImageUpload = async (file: File, onSuccess: (url: string) => void) => {
-    if (!CloudflareR2.isConfigured()) {
-      showError('Cloudflare R2 is not configured. Go to Settings tab to set it up.');
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const url = await CloudflareR2.uploadFile(file, 'portfolio');
-      onSuccess(url);
-      showNotice('Image uploaded to Cloudflare R2!');
-    } catch (err: any) {
-      showError(err?.message || 'Image upload failed.');
-    }
-    setIsUploading(false);
-  };
 
   // Save R2 config
   const handleSaveR2Config = () => {
@@ -418,7 +397,16 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                 <InputField label="Location" value={data.location} onChange={(v) => setData({ ...data, location: v })} />
               </div>
 
-              <InputField label="CV / Resume URL" value={data.cvUrl} onChange={(v) => setData({ ...data, cvUrl: v })} type="url" placeholder="https://..." />
+              <MediaUploadField
+                label="CV / Resume Document (PDF / Link)"
+                value={data.cvUrl}
+                onChange={(v) => setData({ ...data, cvUrl: v })}
+                folder="resumes"
+                accept=".pdf,.doc,.docx,application/pdf"
+                isDocument={true}
+                placeholder="https://... or upload PDF directly to R2"
+                helperText="Upload your Resume / CV PDF directly to Cloudflare R2 for zero-broken-link downloads."
+              />
 
               <h4 className="text-xs font-bold text-white mt-6 mb-3 flex items-center gap-2">
                 <Globe className="w-3.5 h-3.5 text-blue-400" /> Social & Profile Links
@@ -432,61 +420,30 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                 <InputField label="YouTube / Other" value={data.socials.youtube || ''} onChange={(v) => setData({ ...data, socials: { ...data.socials, youtube: v } })} placeholder="https://youtube.com/..." />
               </div>
 
-              <button onClick={handleSaveAll} disabled={isSaving} className="w-full py-3 bg-forest-bright text-black font-bold text-sm rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center justify-center gap-2 mt-4">
+              <button onClick={handleSaveAll} disabled={isSaving} className="w-full py-3 bg-forest-bright text-black font-bold text-sm rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center justify-center gap-2 mt-4 cursor-pointer">
                 <Save className="w-4 h-4" /> {isSaving ? 'Saving...' : 'Save Profile'}
               </button>
             </div>
 
             {/* Profile Photo Card */}
-            <div className={`lg:col-span-4 ${cardClass} h-fit`}>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
-                <Image className="w-4 h-4 text-forest-bright" /> Profile Photo
-              </h3>
-
-              <div className="relative rounded-xl overflow-hidden border border-white/10 mb-4 bg-black/40">
-                {data.avatarUrl ? (
-                  <img
-                    src={data.avatarUrl}
-                    alt="Profile"
-                    className="w-full h-64 object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-64 flex flex-col items-center justify-center text-center p-6 text-white/50">
-                    <Image className="w-12 h-12 mb-2 text-[#ffdb70]/50" />
-                    <span className="text-xs">No photo uploaded yet</span>
-                  </div>
-                )}
+            <div className={`lg:col-span-4 ${cardClass} h-fit space-y-4`}>
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Image className="w-4 h-4 text-forest-bright" /> Profile Photo (Avatar)
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-forest-bright/10 text-forest-bright border border-forest-bright/30">
+                  R2 Enabled
+                </span>
               </div>
 
-              <InputField label="Photo URL" value={data.avatarUrl} onChange={(v) => setData({ ...data, avatarUrl: v })} placeholder="https://... or upload below" />
-
-              <div className="mt-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handleImageUpload(file, (url) => {
-                        setData({ ...data, avatarUrl: url });
-                      });
-                    }
-                  }}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="w-full py-2.5 text-xs font-semibold rounded-xl border border-dashed border-white/20 text-white/60 hover:text-white hover:border-forest-bright/50 hover:bg-forest-bright/5 transition-all flex items-center justify-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  {isUploading ? 'Uploading to Cloudflare R2...' : 'Upload via Cloudflare R2'}
-                </button>
-                {!CloudflareR2.isConfigured() && (
-                  <p className="text-[10px] text-amber-400/70 mt-1.5 text-center">Configure R2 in Settings tab first</p>
-                )}
-              </div>
+              <MediaUploadField
+                label="Profile Portrait / Avatar"
+                value={data.avatarUrl}
+                onChange={(url) => setData({ ...data, avatarUrl: url })}
+                folder="avatars"
+                previewAspect="square"
+                helperText="Square 1:1 portrait recommended. Upload directly to Cloudflare R2 for permanent CDN uptime."
+              />
             </div>
           </div>
         )}
@@ -655,12 +612,15 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                 onChange={(v) => setData({ ...data, experienceSectionTitle: v })}
                 placeholder="Resume"
               />
-              <InputField
-                label="CV / Resume Document URL (Download Link)"
+              <MediaUploadField
+                label="CV / Resume Document (PDF / Link)"
                 value={data.cvUrl || ''}
                 onChange={(v) => setData({ ...data, cvUrl: v })}
-                placeholder="https://... (Google Drive, PDF, Cloudflare R2 link)"
-                type="url"
+                folder="resumes"
+                accept=".pdf,.doc,.docx,application/pdf"
+                isDocument={true}
+                placeholder="https://... or upload PDF directly to R2"
+                helperText="Upload your Resume / CV PDF directly to Cloudflare R2 for instant, permanent recruiter downloads."
               />
             </div>
 
@@ -1052,16 +1012,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InputField
-                    label="Company Logo / Photo URL"
+                <div className="space-y-4">
+                  <MediaUploadField
+                    label="Company Logo / Venture Image"
                     value={v.imageUrl || ''}
-                    placeholder="https://... (or upload to R2)"
                     onChange={(val) => {
                       const updated = [...(data.ventures || [])];
                       updated[idx] = { ...v, imageUrl: val };
                       setData({ ...data, ventures: updated });
                     }}
+                    folder="ventures"
+                    previewAspect="square"
+                    placeholder="https://... or upload to Cloudflare R2"
+                    helperText="Upload company logo or startup banner. R2 ensures images never 404 or expire."
                   />
                   <InputField
                     label="Website URL"
@@ -1217,16 +1180,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InputField
-                      label="Campaign Image / Cover URL"
+                  <div className="space-y-4">
+                    <MediaUploadField
+                      label="Campaign Image / Brand Cover"
                       value={org.imageUrl || ''}
-                      placeholder="https://..."
                       onChange={(val) => {
                         const updated = [...(data.modelingOrganizations || [])];
                         updated[idx] = { ...org, imageUrl: val };
                         setData({ ...data, modelingOrganizations: updated });
                       }}
+                      folder="modeling/brands"
+                      previewAspect="video"
+                      placeholder="https://... or upload campaign cover to R2"
+                      helperText="Upload editorial cover or campaign banner to Cloudflare R2."
                     />
                     <InputField
                       label="External Campaign Link (optional)"
@@ -1300,21 +1266,18 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                       </button>
                     </div>
 
-                    {photo.imageUrl && (
-                      <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-black/60 border border-white/10">
-                        <img src={photo.imageUrl} alt={photo.title} className="w-full h-full object-cover" />
-                      </div>
-                    )}
-
-                    <InputField
-                      label="Photo URL"
+                    <MediaUploadField
+                      label="Gallery Photo"
                       value={photo.imageUrl}
-                      placeholder="https://..."
                       onChange={(val) => {
                         const updated = [...(data.modelingPhotos || [])];
                         updated[idx] = { ...photo, imageUrl: val };
                         setData({ ...data, modelingPhotos: updated });
                       }}
+                      folder="modeling/gallery"
+                      previewAspect="portrait"
+                      placeholder="https://... or upload photoshoot image to R2"
+                      helperText="High-fashion 3:4 portrait photo. Cloudflare R2 ensures lifetime hosting."
                     />
 
                     <div className="grid grid-cols-2 gap-2">
@@ -1486,39 +1449,15 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
 
               <InputField label="Technologies (comma separated)" value={pTechs} onChange={setPTechs} placeholder="React, Node.js, MongoDB" />
               
-              <div>
-                <label className={labelClass}>Project Image</label>
-                <input
-                  type="url"
-                  value={pImage}
-                  onChange={(e) => setPImage(e.target.value)}
-                  placeholder="https://... or upload below"
-                  className={inputClass}
-                />
-                <div className="mt-2">
-                  <input
-                    ref={projectFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleImageUpload(file, (url) => setPImage(url));
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => projectFileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="w-full py-2 text-xs font-semibold rounded-lg border border-dashed border-white/15 text-white/50 hover:text-white hover:border-forest-bright/40 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    {isUploading ? 'Uploading...' : 'Upload Image'}
-                  </button>
-                </div>
-              </div>
+              <MediaUploadField
+                label="Project Showcase Image"
+                value={pImage}
+                onChange={setPImage}
+                folder="projects"
+                previewAspect="video"
+                placeholder="https://... or upload project screenshot/mockup to R2"
+                helperText="Recommended: 16:9 widescreen screenshot or device mockup. R2 guarantees images never 404 or expire."
+              />
 
               <InputField label="Live Demo URL" value={pLive} onChange={setPLive} type="url" placeholder="https://myproject.com" />
               <InputField label="GitHub Repository URL" value={pGithub} onChange={setPGithub} type="url" placeholder="https://github.com/..." />
@@ -1593,7 +1532,15 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                         <InputField label="Live URL" value={proj.liveUrl} onChange={(v) => handleUpdateProject(proj.id, { liveUrl: v })} />
                         <InputField label="GitHub URL" value={proj.githubUrl} onChange={(v) => handleUpdateProject(proj.id, { githubUrl: v })} />
                       </div>
-                      <InputField label="Image URL" value={proj.imageUrl} onChange={(v) => handleUpdateProject(proj.id, { imageUrl: v })} />
+                      <MediaUploadField
+                        label="Project Screenshot / Mockup"
+                        value={proj.imageUrl}
+                        onChange={(url) => handleUpdateProject(proj.id, { imageUrl: url })}
+                        folder="projects"
+                        previewAspect="video"
+                        placeholder="https://... or upload to Cloudflare R2"
+                        helperText="Upload to Cloudflare R2 for zero dead links."
+                      />
                       <InputField label="Technologies (comma)" value={proj.technologies.join(', ')} onChange={(v) => handleUpdateProject(proj.id, { technologies: v.split(',').map(s => s.trim()).filter(Boolean) })} />
                       <InputField label="Description" value={proj.description} onChange={(v) => handleUpdateProject(proj.id, { description: v })} textarea rows={2} />
                       <button
@@ -1655,19 +1602,32 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
 
             {/* Cloudflare R2 Configuration */}
             <div className={`${cardClass} space-y-5`}>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
-                <Upload className="w-4 h-4 text-forest-bright" /> Cloudflare R2 Configuration
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Configure your Cloudflare R2 bucket for image uploads. You need a Cloudflare Worker that proxies upload requests to your R2 bucket.
-                Once configured, you can upload images directly from the admin panel.
-              </p>
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-forest-bright" /> Cloudflare R2 Cloud Storage
+                </h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-forest-bright/10 text-forest-bright border border-forest-bright/30">
+                  Built-in Pages Function Active
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-forest-bright/5 border border-forest-bright/20 text-xs text-slate-300 leading-relaxed space-y-2">
+                <p className="font-semibold text-white flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-forest-bright" /> Direct R2 Uploads Are Always Active!
+                </p>
+                <p className="text-slate-400 text-[11px]">
+                  Your portfolio uses native Cloudflare Pages Functions (<code className="text-forest-bright font-mono">/api/upload</code>) connected directly to your R2 bucket (<code className="text-forest-bright font-mono">shoron-portfolio-media</code>). All direct file uploads in Profile, Ventures, Modeling, and Projects are stored permanently with zero expiration.
+                </p>
+                <div className="pt-1 text-[11px] text-amber-300/90 border-t border-white/10">
+                  <strong>💡 Why do external URLs die after a few days?</strong> Image links copied from Discord, Facebook, or temporary image hosts use temporary HMAC signature tokens (<code className="bg-black/40 px-1 py-0.5 rounded font-mono">?ex=...&token=...</code>) that automatically self-destruct after 24–48 hours. By using the <strong>"Direct R2 Upload"</strong> option in every section, your images are stored forever in your own Cloudflare account.
+                </div>
+              </div>
 
               <InputField
-                label="Worker URL (PUT endpoint)"
+                label="Custom Worker URL (Optional override)"
                 value={r2Config.workerUrl}
                 onChange={(v) => setR2Config({ ...r2Config, workerUrl: v })}
-                placeholder="https://your-worker.your-subdomain.workers.dev"
+                placeholder="Leave blank to use default native Cloudflare Pages R2 (/api/upload)"
               />
               <InputField
                 label="R2 Bucket Name"

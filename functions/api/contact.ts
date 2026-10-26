@@ -21,27 +21,60 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const recipient = 'shoronhossen886@gmail.com';
+    // 1. Save to Cloudflare D1 so messages are never lost
+    if (context.env?.DB) {
+      try {
+        await context.env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS contact_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            subject TEXT,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `).run();
 
-    // Dispatch to FormSubmit in background edge worker with zero CORS delay
+        await context.env.DB.prepare(`
+          INSERT INTO contact_messages (name, email, subject, message)
+          VALUES (?, ?, ?, ?)
+        `).bind(name, email, subject || `Portfolio Inquiry from ${name}`, message).run();
+      } catch (dbErr) {
+        console.warn('D1 contact message save warning:', dbErr);
+      }
+    }
+
+    // 2. Dispatch to FormSubmit in background using reliable URL-encoded form data
+    const formParams = new URLSearchParams();
+    formParams.append('name', name);
+    formParams.append('email', email);
+    formParams.append('_subject', subject || `Portfolio Inquiry from ${name}`);
+    formParams.append('message', message);
+    formParams.append('_replyto', email);
+    formParams.append('_template', 'table');
+    formParams.append('_captcha', 'false');
+
+    const sendEmail = async (target: string) => {
+      try {
+        await fetch(`https://formsubmit.co/${encodeURIComponent(target)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Referer': 'https://shoron-portfolio.pages.dev',
+          },
+          body: formParams.toString(),
+          signal: AbortSignal.timeout(6000),
+        });
+      } catch (e) {
+        console.error('Mail forward error for', target, e);
+      }
+    };
+
     context.waitUntil(
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipient)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Referer': 'https://shoron-portfolio.pages.dev',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          _subject: subject || `Portfolio Inquiry from ${name}`,
-          message,
-          _replyto: email,
-          _template: 'table',
-          _captcha: 'false',
-        }),
-      }).catch((e) => console.error('Cloudflare Edge mail forward error:', e))
+      Promise.allSettled([
+        sendEmail('shoronhossen886@gmail.com'),
+        sendEmail('meshoron53@gmail.com'),
+      ])
     );
 
     // Instant sub-50ms 200 response to client

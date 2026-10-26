@@ -22,30 +22,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // 1. If Gemini API Key provided, attempt direct Gemini API first
     if (geminiApiKey) {
       const candidateModels = [
-        'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
       ];
 
-      const fullContents = [
-        {
-          role: 'user',
-          parts: [{ text: `[System Instructions]: ${systemPrompt}\n\nAcknowledge.` }],
+      const modernPayload = {
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
         },
-        {
-          role: 'model',
-          parts: [{ text: 'Understood. I will answer as Shoron Hossen.' }],
-        },
-        ...messages.map((m) => ({
+        contents: messages.map((m) => ({
           role: m.role === 'user' ? 'user' : 'model',
           parts: [{ text: m.content }],
         })),
-      ];
-
-      const payload = {
-        contents: fullContents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 250 },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 350 },
       };
 
       try {
@@ -54,7 +44,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             const res = await fetch(`${url}?key=${encodeURIComponent(geminiApiKey)}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
+              body: JSON.stringify(modernPayload),
+              signal: AbortSignal.timeout(4500),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = (await res.json()) as any;
@@ -77,8 +68,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (context.env?.AI) {
       try {
         const aiMessages = [
-          { role: 'system', content: systemPrompt },
-          ...messages.slice(-4).map((m) => ({
+          {
+            role: 'system',
+            content: `${systemPrompt}\n\nCRITICAL INSTRUCTION: You ARE MD. Shoron Hossen. When the user asks about "shoron", "shoron's college", "experience", "projects", or "years", they are asking about YOU. Give direct factual answers about yourself immediately. NEVER output a generic menu list of topics.`,
+          },
+          ...messages.slice(-5).map((m) => ({
             role: m.role === 'assistant' ? 'assistant' : 'user',
             content: m.content,
           })),
@@ -86,13 +80,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         const response: any = await context.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
           messages: aiMessages,
-          max_tokens: 220,
-          temperature: 0.7,
+          max_tokens: 300,
+          temperature: 0.6,
         });
 
         const reply = response?.response || response?.text;
-        if (reply) {
-          return new Response(JSON.stringify({ success: true, reply, source: 'workers-ai' }), {
+        if (reply && reply.trim().length > 0) {
+          return new Response(JSON.stringify({ success: true, reply: reply.trim(), source: 'workers-ai' }), {
             status: 200,
             headers: corsHeaders,
           });

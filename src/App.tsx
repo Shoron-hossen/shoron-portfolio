@@ -408,8 +408,7 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
 
-    const recipientEmail = data.email || 'meshoron53@gmail.com';
-    const backupRecipient = 'shoronhossen886@gmail.com';
+    const targetRecipient = data.email || 'shoronhossen886@gmail.com';
 
     const payload = {
       name: name.trim(),
@@ -431,24 +430,41 @@ function PortfolioContactSection({ data }: { data: PortfolioData }) {
     setMessage('');
     setTimeout(() => setSent(false), 9000);
 
-    // Non-blocking background dispatch — fires to multiple providers for reliability
+    // Non-blocking background dispatch — fires to Cloudflare Edge API and fallback
     const dispatchMail = async () => {
-      const msgPayload = JSON.stringify(payload);
-      const headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-      const sig = AbortSignal.timeout(8000);
+      // 1. Primary: Cloudflare Pages Edge API (/api/contact)
+      try {
+        const edgeRes = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: payload.name,
+            email: payload.email,
+            subject: payload._subject,
+            message: payload.message,
+          }),
+          signal: AbortSignal.timeout(6000),
+        });
+        if (edgeRes.ok) return;
+      } catch {}
 
-      // Provider 1: FormSubmit to primary email (meshoron53@gmail.com)
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
-        method: 'POST', headers, body: msgPayload, signal: sig,
-      }).catch(() => {});
+      // 2. Direct browser fallback using form-urlencoded (never hangs or CORS blocks)
+      try {
+        const formBody = new URLSearchParams();
+        formBody.append('name', payload.name);
+        formBody.append('email', payload.email);
+        formBody.append('_subject', payload._subject);
+        formBody.append('message', payload.message);
+        formBody.append('_replyto', payload.email);
+        formBody.append('_captcha', 'false');
 
-      // Provider 2: FormSubmit to backup email (shoronhossen886@gmail.com)
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(backupRecipient)}`, {
-        method: 'POST', headers, body: msgPayload, signal: AbortSignal.timeout(8000),
-      }).catch(() => {});
+        await fetch(`https://formsubmit.co/${encodeURIComponent(targetRecipient)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formBody.toString(),
+          mode: 'no-cors',
+        });
+      } catch {}
     };
 
     dispatchMail();
