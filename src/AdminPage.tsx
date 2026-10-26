@@ -704,6 +704,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                       setData({ ...data, educations: current });
                     }}
                   />
+
+                  <div className="flex items-center justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSaveAll();
+                        showNotice(`Saved education "${edu.title || 'Untitled'}"!`);
+                      }}
+                      className="px-3.5 py-1.5 bg-[#ffdb70] text-black font-semibold text-xs rounded-xl hover:bg-[#ffdb70]/90 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Save Education
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -804,6 +817,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                       setData({ ...data, experiences: updated });
                     }}
                   />
+
+                  <div className="flex items-center justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSaveAll();
+                        showNotice(`Saved experience "${exp.title || 'Untitled'}"!`);
+                      }}
+                      className="px-3.5 py-1.5 bg-[#ffdb70] text-black font-semibold text-xs rounded-xl hover:bg-[#ffdb70]/90 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Save Experience
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -1050,6 +1076,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                     setData({ ...data, ventures: updated });
                   }}
                 />
+
+                <div className="flex items-center justify-end pt-2 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleSaveAll();
+                      showNotice(`Saved venture "${v.name || 'Untitled'}"!`);
+                    }}
+                    className="px-4 py-2 bg-forest-bright text-black font-semibold text-xs rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <Save className="w-3.5 h-3.5" /> Save Venture
+                  </button>
+                </div>
               </div>
             ))}
 
@@ -1205,6 +1244,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                       }}
                     />
                   </div>
+
+                  <div className="flex items-center justify-end pt-2 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSaveAll();
+                        showNotice(`Saved brand "${org.name || 'Untitled'}"!`);
+                      }}
+                      className="px-4 py-2 bg-forest-bright text-black font-semibold text-xs rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Save Brand
+                    </button>
+                  </div>
                 </div>
               ))}
 
@@ -1324,6 +1376,19 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                           setData({ ...data, modelingPhotos: updated });
                         }}
                       />
+                    </div>
+
+                    <div className="pt-2 border-t border-white/5">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleSaveAll();
+                          showNotice(`Saved photo "${photo.title || 'Untitled'}"!`);
+                        }}
+                        className="w-full py-2 bg-forest-bright text-black font-semibold text-xs rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Save className="w-3.5 h-3.5" /> Save Photo
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1543,16 +1608,44 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                       />
                       <InputField label="Technologies (comma)" value={proj.technologies.join(', ')} onChange={(v) => handleUpdateProject(proj.id, { technologies: v.split(',').map(s => s.trim()).filter(Boolean) })} />
                       <InputField label="Description" value={proj.description} onChange={(v) => handleUpdateProject(proj.id, { description: v })} textarea rows={2} />
-                      <button
-                        onClick={() => setEditingProjectId(null)}
-                        className="text-xs text-forest-bright hover:underline mt-1"
-                      >
-                        Done Editing
-                      </button>
+                      
+                      <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleSaveAll();
+                            setEditingProjectId(null);
+                            showNotice(`Project "${proj.title || 'Untitled'}" updated and saved!`);
+                          }}
+                          className="px-4 py-2.5 bg-forest-bright text-black font-bold text-xs rounded-xl hover:bg-forest-bright/90 transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+                        >
+                          <Save className="w-3.5 h-3.5" /> Save Project Changes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingProjectId(null)}
+                          className="px-3.5 py-2.5 text-xs text-slate-300 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
+                        >
+                          Close Editor
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
+
+              {data.projects.length > 0 && (
+                <div className="pt-3">
+                  <button
+                    type="button"
+                    onClick={handleSaveAll}
+                    disabled={isSaving}
+                    className="w-full py-3.5 bg-forest-bright text-black font-bold text-sm rounded-xl hover:bg-forest-bright/90 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" /> {isSaving ? 'Saving to Cloudflare D1...' : 'Save All Projects to Cloudflare D1'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -963,28 +963,18 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right Side: Developer Photo — Comes directly out of broken page background, no outer box, no gimmicks */}
+            {/* Right Side: Developer Photo — Real colors, razor-sharp fidelity, no distortion */}
             <div className="w-full flex justify-center md:col-span-5 md:justify-end">
-              <div className="relative group w-full max-w-[325px]">
-                {/* Broken Page Background Edge: Subtle organic deckled tear directly on dark background */}
-                <div
-                  className="relative aspect-square w-full overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.01]"
-                  style={{
-                    clipPath: 'polygon(0% 2px, 2% 0px, 5% 3px, 9% 1px, 14% 3px, 18% 0px, 23% 3px, 28% 1px, 32% 0px, 37% 3px, 42% 1px, 47% 4px, 52% 1px, 57% 3px, 62% 0px, 66% 3px, 71% 1px, 76% 4px, 80% 0px, 85% 3px, 89% 1px, 94% 4px, 98% 1px, 100% 2px, 99% 14%, 100% 27%, 99% 41%, 100% 55%, 99% 69%, 100% 84%, 99% calc(100% - 2px), 97% 100%, 93% calc(100% - 3px), 88% calc(100% - 1px), 83% calc(100% - 4px), 79% calc(100% - 1px), 74% calc(100% - 3px), 69% calc(100% - 1px), 64% calc(100% - 4px), 59% calc(100% - 1px), 54% calc(100% - 3px), 49% calc(100% - 1px), 44% calc(100% - 4px), 39% calc(100% - 1px), 34% calc(100% - 4px), 29% calc(100% - 1px), 24% calc(100% - 3px), 19% calc(100% - 1px), 14% calc(100% - 3px), 9% calc(100% - 1px), 5% calc(100% - 3px), 0% calc(100% - 2px), 1% 86%, 0% 72%, 1% 58%, 0% 43%, 1% 29%, 0% 15%)',
-                    filter: 'drop-shadow(0 0 1px rgba(255, 219, 112, 0.45)) drop-shadow(0 16px 36px rgba(0, 0, 0, 0.95))',
-                  }}
-                >
+              <div className="relative group w-full max-w-[340px]">
+                {/* Crystal-clear photo container with clean rounded corners & subtle edge glow */}
+                <div className="relative aspect-square sm:aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/15 bg-[#0a0d14] shadow-2xl transition-all duration-300 group-hover:border-forest-bright/40">
                   <img
                     src={data.avatarUrl || '/developer_portrait.png'}
                     alt={`${data.name} — ${data.role}`}
-                    className="h-full w-full object-cover object-center transition-all duration-500"
-                    style={{
-                      imageRendering: 'smooth',
-                      filter: 'contrast(0.96) brightness(1.0) saturate(0.98)',
-                    }}
+                    className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                    loading="eager"
+                    decoding="async"
                   />
-                  {/* Subtle dark ambient blend into #03060a page background */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#03060a]/60 via-transparent to-[#03060a]/20" />
                 </div>
 
                 {/* Clean, minimal name & location directly under photo — no outer card box */}
