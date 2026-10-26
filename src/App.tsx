@@ -1604,12 +1604,6 @@ export default function App() {
                     Modeling
                   </button>
                   <a href="#contact" className="transition-colors hover:text-[#ffdb70]">Contact</a>
-                  <button
-                    onClick={() => navigate('/admin')}
-                    className="font-medium transition-colors cursor-pointer text-[#ffdb70] hover:underline"
-                  >
-                    Admin CMS
-                  </button>
                 </div>
 
                 {/* Social pill buttons with icons */}

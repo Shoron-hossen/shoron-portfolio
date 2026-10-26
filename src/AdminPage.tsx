@@ -30,6 +30,7 @@ import {
   ChevronUp,
   ChevronDown,
   ArrowUpDown,
+  LogOut,
 } from 'lucide-react';
 import { PortfolioStore, DEFAULT_PORTFOLIO_DATA, type PortfolioData } from './portfolioStore';
 import { CloudflareR2, type R2Config } from './cloudflareR2';
@@ -170,21 +171,70 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
     setDragOverProjectIndex(null);
   };
 
+  // SHA-256 hash of admin password (plaintext is never stored in code)
+  const ADMIN_PASSWORD_HASH = 'f4df9a2a8dabc30e27273f7f06f22aa19fe398884306d0b20435a8a2a83c793b';
+
+  const sha256Hex = async (text: string): Promise<string> => {
+    const enc = new TextEncoder().encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  };
+
   useEffect(() => {
+    if (sessionStorage.getItem('shoron_admin_session') === 'authenticated') {
+      setIsAuthenticated(true);
+    }
     const unsub = PortfolioStore.subscribeToData((updated) => {
       setData(updated);
     });
     return () => unsub?.();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123' || password === 'shoron2026') {
-      setIsAuthenticated(true);
-    } else {
-      setErrorMsg('Incorrect password.');
+    try {
+      // 1. Direct Web Crypto SHA-256 validation (zero latency, offline/dev compatible, no plaintext secret)
+      const hashed = await sha256Hex(password);
+      const envPass = (import.meta as any).env?.VITE_ADMIN_PASSWORD;
+      let isValid = hashed === ADMIN_PASSWORD_HASH || (envPass && password === envPass);
+
+      // 2. If not matched locally, check serverless verify endpoint if available
+      if (!isValid) {
+        try {
+          const res = await fetch('/api/admin-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password }),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.success) isValid = true;
+          }
+        } catch {
+          // Gracefully continue with local check
+        }
+      }
+
+      if (isValid) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('shoron_admin_session', 'authenticated');
+        setErrorMsg('');
+      } else {
+        setErrorMsg('Incorrect password.');
+        setTimeout(() => setErrorMsg(''), 3000);
+      }
+    } catch {
+      setErrorMsg('Authentication error. Please try again.');
       setTimeout(() => setErrorMsg(''), 3000);
     }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setPassword('');
+    sessionStorage.removeItem('shoron_admin_session');
   };
 
   const showNotice = (msg: string) => {
@@ -392,6 +442,13 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
               className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-full border border-white/10 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> View Site
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-xs text-rose-300 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 px-3.5 py-2 rounded-full border border-rose-500/20 transition-colors cursor-pointer"
+              title="Sign out of Admin Dashboard"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Logout
             </button>
           </div>
         </div>
