@@ -26,6 +26,10 @@ import {
   BookOpen,
   Code2,
   Sparkles,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  ArrowUpDown,
 } from 'lucide-react';
 import { PortfolioStore, DEFAULT_PORTFOLIO_DATA, type PortfolioData } from './portfolioStore';
 import { CloudflareR2, type R2Config } from './cloudflareR2';
@@ -110,6 +114,61 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
 
   // Editing project ID
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+
+  // Drag and Drop project reordering state
+  const [draggedProjectIndex, setDraggedProjectIndex] = useState<number | null>(null);
+  const [dragOverProjectIndex, setDragOverProjectIndex] = useState<number | null>(null);
+
+  const moveProject = async (fromIndex: number, toIndex: number) => {
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= data.projects.length ||
+      toIndex >= data.projects.length
+    ) {
+      return;
+    }
+    const newProjects = [...data.projects];
+    const [movedProject] = newProjects.splice(fromIndex, 1);
+    newProjects.splice(toIndex, 0, movedProject);
+
+    const updated = {
+      ...data,
+      projects: newProjects,
+    };
+    setData(updated);
+    await PortfolioStore.saveData(updated);
+    showNotice(`Moved "${movedProject.title || 'Project'}" to #${toIndex + 1}! Sequence saved.`);
+  };
+
+  const handleProjectDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedProjectIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleProjectDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverProjectIndex !== index) {
+      setDragOverProjectIndex(index);
+    }
+  };
+
+  const handleProjectDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedProjectIndex !== null && draggedProjectIndex !== targetIndex) {
+      await moveProject(draggedProjectIndex, targetIndex);
+    }
+    setDraggedProjectIndex(null);
+    setDragOverProjectIndex(null);
+  };
+
+  const handleProjectDragEnd = () => {
+    setDraggedProjectIndex(null);
+    setDragOverProjectIndex(null);
+  };
 
   useEffect(() => {
     const unsub = PortfolioStore.subscribeToData((updated) => {
@@ -1537,11 +1596,22 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
               </button>
             </form>
 
-            {/* Project List */}
+            {/* Project List with Drag & Drop Reordering */}
             <div className="lg:col-span-7 space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <FolderPlus className="w-4 h-4 text-forest-bright" /> Current Projects ({data.projects.length})
-              </h3>
+              <div className="flex items-center justify-between pb-2 border-b border-white/10 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <FolderPlus className="w-4 h-4 text-forest-bright" /> Current Projects ({data.projects.length})
+                  </h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Drag and drop cards or click ↑ / ↓ arrows to reorder serial. Serial #1 is shown first on the website!
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-forest-bright/10 border border-forest-bright/30 text-[10px] font-mono text-forest-bright">
+                  <ArrowUpDown className="w-3 h-3" />
+                  <span>Drag & Drop Enabled</span>
+                </div>
+              </div>
 
               {data.projects.length === 0 && (
                 <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
@@ -1550,41 +1620,111 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                 </div>
               )}
 
-              {data.projects.map((proj) => (
-                <div key={proj.id} className="bg-slate-900/80 border border-white/10 rounded-2xl overflow-hidden">
-                  <div className="flex items-center gap-4 p-4">
-                    <img src={proj.imageUrl} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-white/10" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-white truncate">{proj.title}</h4>
-                      <p className="text-[11px] text-slate-400 font-mono">{proj.subtitle} · {proj.category}</p>
-                      <div className="flex items-center gap-3 mt-1.5">
-                        {proj.liveUrl && (
-                          <a href={proj.liveUrl} target="_blank" rel="noreferrer" className="text-[10px] text-forest-bright flex items-center gap-1 hover:underline">
-                            <ExternalLink className="w-3 h-3" /> Live
-                          </a>
-                        )}
-                        {proj.githubUrl && (
-                          <a href={proj.githubUrl} target="_blank" rel="noreferrer" className="text-[10px] text-slate-400 flex items-center gap-1 hover:text-white">
-                            <GithubIcon className="w-3 h-3" /> GitHub
-                          </a>
+              {data.projects.map((proj, idx) => {
+                const isDragging = draggedProjectIndex === idx;
+                const isDragOver = dragOverProjectIndex === idx;
+
+                return (
+                  <div
+                    key={proj.id}
+                    draggable
+                    onDragStart={(e) => handleProjectDragStart(e, idx)}
+                    onDragOver={(e) => handleProjectDragOver(e, idx)}
+                    onDrop={(e) => handleProjectDrop(e, idx)}
+                    onDragEnd={handleProjectDragEnd}
+                    className={`bg-slate-900/80 border rounded-2xl overflow-hidden transition-all ${
+                      isDragging
+                        ? 'opacity-40 border-forest-bright/60 scale-[0.98]'
+                        : isDragOver
+                        ? 'border-forest-bright bg-forest-bright/10 shadow-lg ring-2 ring-forest-bright/40'
+                        : 'border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      {/* Drag Handle & One-click Reorder Arrows */}
+                      <div className="flex items-center gap-1 shrink-0 bg-black/40 border border-white/5 rounded-xl p-1">
+                        <div
+                          className="p-1 text-slate-400 hover:text-white cursor-grab active:cursor-grabbing rounded hover:bg-white/10 transition-colors"
+                          title="Drag to reorder position"
+                        >
+                          <GripVertical className="w-4 h-4 text-slate-400 hover:text-forest-bright" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveProject(idx, idx - 1);
+                            }}
+                            className="p-0.5 text-slate-400 hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 rounded transition-colors cursor-pointer"
+                            title="Move up (earlier in serial)"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === data.projects.length - 1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveProject(idx, idx + 1);
+                            }}
+                            className="p-0.5 text-slate-400 hover:text-white disabled:opacity-20 disabled:hover:text-slate-400 rounded transition-colors cursor-pointer"
+                            title="Move down (later in serial)"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Position Serial Number Badge */}
+                      <div className="shrink-0 flex flex-col items-center">
+                        <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${
+                          idx === 0
+                            ? 'bg-forest-bright/15 text-forest-bright border-forest-bright/40'
+                            : 'bg-white/5 text-slate-300 border-white/10'
+                        }`}>
+                          #{idx + 1}
+                        </span>
+                        {idx === 0 && (
+                          <span className="text-[9px] font-semibold text-forest-bright mt-0.5">First</span>
                         )}
                       </div>
+
+                      <img src={proj.imageUrl} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-white/10" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-white truncate">{proj.title}</h4>
+                        <p className="text-[11px] text-slate-400 font-mono">{proj.subtitle} · {proj.category}</p>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {proj.liveUrl && (
+                            <a href={proj.liveUrl} target="_blank" rel="noreferrer" className="text-[10px] text-forest-bright flex items-center gap-1 hover:underline">
+                              <ExternalLink className="w-3 h-3" /> Live
+                            </a>
+                          )}
+                          {proj.githubUrl && (
+                            <a href={proj.githubUrl} target="_blank" rel="noreferrer" className="text-[10px] text-slate-400 flex items-center gap-1 hover:text-white">
+                              <GithubIcon className="w-3 h-3" /> GitHub
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setEditingProjectId(editingProjectId === proj.id ? null : proj.id)}
+                          className="p-2 text-slate-400 hover:text-forest-bright hover:bg-forest-bright/10 rounded-xl transition-colors cursor-pointer"
+                          title="Edit project"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(proj.id)}
+                          className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+                          title="Delete project"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => setEditingProjectId(editingProjectId === proj.id ? null : proj.id)}
-                        className="p-2 text-slate-400 hover:text-forest-bright hover:bg-forest-bright/10 rounded-xl transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProject(proj.id)}
-                        className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Inline Edit Form */}
                   {editingProjectId === proj.id && (
@@ -1632,7 +1772,8 @@ export default function AdminPage({ onBackHome }: AdminPageProps) {
                     </div>
                   )}
                 </div>
-              ))}
+              );
+            })}
 
               {data.projects.length > 0 && (
                 <div className="pt-3">
